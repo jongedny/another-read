@@ -1,9 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import { api } from "~/trpc/react";
 
 export function EventList() {
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editValue, setEditValue] = useState("");
+
+    const utils = api.useUtils();
     const { data: events, isLoading } = api.event.getAll.useQuery();
+    const updateEvent = api.event.update.useMutation({
+        onSuccess: async () => {
+            await utils.event.getAll.invalidate();
+            setEditingId(null);
+            setEditValue("");
+        },
+    });
+
+    const handleEdit = (id: number, currentName: string) => {
+        setEditingId(id);
+        setEditValue(currentName);
+    };
+
+    const handleSave = async (id: number) => {
+        if (!editValue.trim()) return;
+        await updateEvent.mutateAsync({ id, name: editValue });
+    };
+
+    const handleCancel = () => {
+        setEditingId(null);
+        setEditValue("");
+    };
 
     if (isLoading) {
         return (
@@ -55,25 +82,76 @@ export function EventList() {
                     >
                         <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-purple-500 to-pink-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-1">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 text-2xl">
                                     🎉
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white">
-                                        {event.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-400">
-                                        {new Date(event.createdAt).toLocaleDateString("en-US", {
-                                            year: "numeric",
-                                            month: "long",
-                                            day: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </p>
+                                <div className="flex-1">
+                                    {editingId === event.id ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={editValue}
+                                                onChange={(e) => setEditValue(e.target.value)}
+                                                className="flex-1 rounded-lg border border-purple-500/30 bg-gray-800/50 px-3 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                                disabled={updateEvent.isPending}
+                                                autoFocus
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") handleSave(event.id);
+                                                    if (e.key === "Escape") handleCancel();
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => handleSave(event.id)}
+                                                disabled={updateEvent.isPending || !editValue.trim()}
+                                                className="rounded-lg bg-green-500/20 px-3 py-2 text-green-400 transition-all hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title="Save"
+                                            >
+                                                {updateEvent.isPending ? (
+                                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-green-400 border-t-transparent"></div>
+                                                ) : (
+                                                    "✓"
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={handleCancel}
+                                                disabled={updateEvent.isPending}
+                                                className="rounded-lg bg-red-500/20 px-3 py-2 text-red-400 transition-all hover:bg-red-500/30 disabled:opacity-50"
+                                                title="Cancel"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <h3
+                                                className="text-lg font-semibold text-white cursor-pointer hover:text-purple-400 transition-colors"
+                                                onClick={() => handleEdit(event.id, event.name)}
+                                                title="Click to edit"
+                                            >
+                                                {event.name}
+                                            </h3>
+                                            <p className="text-sm text-gray-400">
+                                                {new Date(event.createdAt).toLocaleDateString("en-US", {
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
+                            {editingId !== event.id && (
+                                <button
+                                    onClick={() => handleEdit(event.id, event.name)}
+                                    className="ml-4 rounded-lg bg-purple-500/20 px-3 py-2 text-sm text-purple-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-purple-500/30"
+                                >
+                                    Edit
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}
