@@ -1,29 +1,80 @@
-# Create T3 App
+# Demo App - Event Management
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A modern event management application built with the T3 Stack, featuring a premium glassmorphism UI and PostgreSQL database persistence.
 
-## What's next? How do I make an app with this?
+**Live Demo**: https://demo-2lw5u0isq-jon-gednys-projects.vercel.app  
+**Repository**: https://github.com/jongedny/demo-app
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+## Features
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- ✨ Create and manage events with a beautiful UI
+- 💾 PostgreSQL database persistence with Drizzle ORM
+- 🎨 Premium glassmorphism design with gradient effects
+- ⚡ Real-time updates and smooth animations
+- 🔒 Type-safe API with tRPC
+- 🚀 Deployed on Vercel with automatic deployments from GitHub
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org) with App Router
+- **Language**: TypeScript
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com)
+- **Database**: Neon Serverless Postgres
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team)
+- **API**: [tRPC](https://trpc.io)
+- **Deployment**: [Vercel](https://vercel.com)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database (or use Neon for development)
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+
+# Push database schema
+npm run db:push
+
+# Start development server
+npm run dev
+```
+
+Visit `http://localhost:3000`
+
+### Environment Variables
+
+Create a `.env` file with:
+
+```env
+DATABASE_URL="your-postgres-connection-string"
+```
+
+## Deployment
+
+This app is configured for automatic deployment on Vercel:
+
+1. Push changes to the `main` branch on GitHub
+2. Vercel automatically builds and deploys
+3. Database migrations run automatically
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run db:push` - Push database schema changes
 
 ## Learn More
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+To learn more about the [T3 Stack](https://create.t3.gg/), check out the following resources:
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+- [T3 Documentation](https://create.t3.gg/)
+- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available)
