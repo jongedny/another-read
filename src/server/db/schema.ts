@@ -1,5 +1,6 @@
 // Database schema for event management
 // https://orm.drizzle.team/docs/sql-schema-declaration
+// Force rebuild - updated schema to use "Another Read" prefix
 
 import { pgTableCreator, serial, text, timestamp } from "drizzle-orm/pg-core";
 
