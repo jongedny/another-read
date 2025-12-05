@@ -16,3 +16,22 @@ export const events = createTable("event", {
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const books = createTable("book", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  author: text("author").notNull(),
+  description: text("description"),
+  isbn: text("isbn"),
+  publicationDate: text("publication_date"),
+  keywords: text("keywords"), // JSON array stored as text
+  price: text("price"),
+  genre: text("genre"),
+  coverImageUrl: text("cover_image_url"),
+  status: text("status"),
+  externalId: text("external_id"), // Original ID from CSV
+  createdBy: text("created_by"),
+  isSample: text("is_sample"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

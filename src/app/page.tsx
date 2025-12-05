@@ -29,6 +29,16 @@ export default async function Home() {
             </p>
           </div>
 
+          {/* Navigation */}
+          <div className="mb-8">
+            <a
+              href="/books"
+              className="rounded-lg bg-purple-500/20 px-6 py-3 text-purple-400 transition-all hover:bg-purple-500/30"
+            >
+              📚 View Book Library →
+            </a>
+          </div>
+
           {/* Create Event Form */}
           <div className="mb-12 w-full">
             <CreateEvent />
