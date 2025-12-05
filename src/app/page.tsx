@@ -1,3 +1,4 @@
+// Another Read - Event Management App
 import { CreateEvent } from "~/app/_components/create-event";
 import { EventList } from "~/app/_components/event-list";
 import { api, HydrateClient } from "~/trpc/server";
