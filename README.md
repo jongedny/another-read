@@ -1,9 +1,9 @@
-# Demo App - Event Management
+# Another Read - Event Management
 
 A modern event management application built with the T3 Stack, featuring a premium glassmorphism UI and PostgreSQL database persistence.
 
-**Live Demo**: https://demo-2lw5u0isq-jon-gednys-projects.vercel.app  
-**Repository**: https://github.com/jongedny/demo-app
+**Live Demo**: https://demo-8jbzhtyyv-jon-gednys-projects.vercel.app  
+**Repository**: https://github.com/jongedny/another-read
 
 ## Features
 

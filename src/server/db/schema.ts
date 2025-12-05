@@ -9,7 +9,7 @@ import { pgTableCreator, serial, text, timestamp } from "drizzle-orm/pg-core";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `Demo App_${name}`);
+export const createTable = pgTableCreator((name) => `Another Read_${name}`);
 
 export const events = createTable("event", {
   id: serial("id").primaryKey(),
