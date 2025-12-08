@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
         console.log("[Cron API] Starting daily event fetch...");
 
         // Fetch events from OpenAI
-        const eventNames = await fetchDailyUKEvents();
+        const dailyEvents = await fetchDailyUKEvents();
 
-        if (eventNames.length === 0) {
+        if (dailyEvents.length === 0) {
             console.log("[Cron API] No events returned from OpenAI");
             return NextResponse.json({
                 success: true,
@@ -43,16 +43,20 @@ export async function GET(request: NextRequest) {
         }
 
         // Save events to database
-        const values = eventNames.map((name) => ({ name }));
+        const values = dailyEvents.map((event) => ({
+            name: event.name,
+            keywords: event.keywords.join(", "), // Store as comma-separated string
+            description: event.description,
+        }));
         await db.insert(events).values(values);
 
-        console.log(`[Cron API] Successfully saved ${eventNames.length} events:`, eventNames);
+        console.log(`[Cron API] Successfully saved ${dailyEvents.length} events:`, dailyEvents);
 
         return NextResponse.json({
             success: true,
-            message: `Successfully saved ${eventNames.length} events`,
-            count: eventNames.length,
-            events: eventNames,
+            message: `Successfully saved ${dailyEvents.length} events`,
+            count: dailyEvents.length,
+            events: dailyEvents,
         });
     } catch (error) {
         console.error("[Cron API] Error:", error);

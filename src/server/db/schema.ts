@@ -15,6 +15,8 @@ export const createTable = pgTableCreator((name) => `Another Read_${name}`);
 export const events = createTable("event", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  keywords: text("keywords"), // Comma-separated keywords or JSON array
+  description: text("description"), // Event description (max 200 words)
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

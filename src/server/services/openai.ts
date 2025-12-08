@@ -8,14 +8,16 @@ const openai = new OpenAI({
 
 export interface DailyEvent {
     name: string;
+    keywords: string[];
+    description: string;
     date: string;
 }
 
 /**
  * Fetches daily UK events from OpenAI API
- * @returns Array of event names for the current date
+ * @returns Array of event objects with name, keywords, and description
  */
-export async function fetchDailyUKEvents(): Promise<string[]> {
+export async function fetchDailyUKEvents(): Promise<DailyEvent[]> {
     const today = new Date();
     const dateString = today.toLocaleDateString("en-GB", {
         day: "numeric",
@@ -33,8 +35,19 @@ These can include:
 
 If there are no major well-known events on this specific date, suggest relevant seasonal events, awareness days, or historical events that occurred on this date.
 
-Please respond with ONLY a JSON array of event names, like this:
-["Event Name 1", "Event Name 2", "Event Name 3", "Event Name 4"]
+For each event, provide:
+1. name: The event name
+2. keywords: An array of 3-5 relevant keywords related to the event
+3. description: A brief description of the event (maximum 200 words)
+
+Please respond with ONLY a JSON array of objects in this exact format:
+[
+  {
+    "name": "Event Name 1",
+    "keywords": ["keyword1", "keyword2", "keyword3"],
+    "description": "A brief description of the event..."
+  }
+]
 
 Do not include any other text or explanation. Always provide at least 1-2 events.`;
 
@@ -53,7 +66,7 @@ Do not include any other text or explanation. Always provide at least 1-2 events
                 },
             ],
             temperature: 0.7,
-            max_tokens: 200,
+            max_tokens: 500,
         });
 
         const content = completion.choices[0]?.message?.content;
@@ -64,16 +77,27 @@ Do not include any other text or explanation. Always provide at least 1-2 events
         console.log(`[OpenAI Service] Raw response:`, content);
 
         // Parse the JSON response
-        const events = JSON.parse(content.trim()) as string[];
+        const events = JSON.parse(content.trim()) as DailyEvent[];
 
-        // Validate that we got an array of strings
+        // Validate that we got an array of objects
         if (!Array.isArray(events)) {
             throw new Error("OpenAI response is not an array");
         }
 
-        // Filter out any non-string values and limit to 4 events
+        // Filter and validate event objects, limit to 4 events
         const validEvents = events
-            .filter((event) => typeof event === "string" && event.length > 0)
+            .filter((event) => {
+                return (
+                    typeof event === "object" &&
+                    event !== null &&
+                    typeof event.name === "string" &&
+                    event.name.length > 0 &&
+                    Array.isArray(event.keywords) &&
+                    event.keywords.length > 0 &&
+                    typeof event.description === "string" &&
+                    event.description.length > 0
+                );
+            })
             .slice(0, 4);
 
         console.log(`[OpenAI Service] Fetched ${validEvents.length} events for ${dateString}:`, validEvents);

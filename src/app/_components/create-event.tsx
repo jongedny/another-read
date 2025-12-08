@@ -5,19 +5,27 @@ import { api } from "~/trpc/react";
 
 export function CreateEvent() {
     const [name, setName] = useState("");
+    const [keywords, setKeywords] = useState("");
+    const [description, setDescription] = useState("");
     const utils = api.useUtils();
 
     const createEvent = api.event.create.useMutation({
         onSuccess: async () => {
             await utils.event.getAll.invalidate();
             setName("");
+            setKeywords("");
+            setDescription("");
         },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (name.trim()) {
-            createEvent.mutate({ name: name.trim() });
+            createEvent.mutate({
+                name: name.trim(),
+                keywords: keywords.trim() || undefined,
+                description: description.trim() || undefined,
+            });
         }
     };
 
@@ -36,6 +44,27 @@ export function CreateEvent() {
                         className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 transition-colors focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
                         disabled={createEvent.isPending}
                     />
+                    <input
+                        type="text"
+                        value={keywords}
+                        onChange={(e) => setKeywords(e.target.value)}
+                        placeholder="Keywords (comma separated)..."
+                        className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 transition-colors focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
+                        disabled={createEvent.isPending}
+                    />
+                </div>
+                <div className="mb-4 mt-3">
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Event description (max 200 words)..."
+                        className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 transition-colors focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
+                        disabled={createEvent.isPending}
+                        rows={3}
+                        maxLength={1000} // Rough character limit for 200 words
+                    />
+                </div>
+                <div className="flex justify-end">
                     <button
                         type="submit"
                         disabled={createEvent.isPending || !name.trim()}

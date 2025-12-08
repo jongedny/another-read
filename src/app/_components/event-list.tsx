@@ -6,6 +6,8 @@ import { api } from "~/trpc/react";
 export function EventList() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValue, setEditValue] = useState("");
+    const [editKeywords, setEditKeywords] = useState("");
+    const [editDescription, setEditDescription] = useState("");
 
     const utils = api.useUtils();
     const { data: events, isLoading } = api.event.getAll.useQuery();
@@ -14,22 +16,33 @@ export function EventList() {
             await utils.event.getAll.invalidate();
             setEditingId(null);
             setEditValue("");
+            setEditKeywords("");
+            setEditDescription("");
         },
     });
 
-    const handleEdit = (id: number, currentName: string) => {
+    const handleEdit = (id: number, currentName: string, currentKeywords: string | null, currentDescription: string | null) => {
         setEditingId(id);
         setEditValue(currentName);
+        setEditKeywords(currentKeywords || "");
+        setEditDescription(currentDescription || "");
     };
 
     const handleSave = async (id: number) => {
         if (!editValue.trim()) return;
-        await updateEvent.mutateAsync({ id, name: editValue });
+        await updateEvent.mutateAsync({
+            id,
+            name: editValue,
+            keywords: editKeywords.trim() || undefined,
+            description: editDescription.trim() || undefined,
+        });
     };
 
     const handleCancel = () => {
         setEditingId(null);
         setEditValue("");
+        setEditKeywords("");
+        setEditDescription("");
     };
 
     if (isLoading) {
@@ -84,65 +97,90 @@ export function EventList() {
                                 </div>
                                 <div className="flex-1">
                                     {editingId === event.id ? (
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-col gap-2 w-full">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={editValue}
+                                                    onChange={(e) => setEditValue(e.target.value)}
+                                                    className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
+                                                    disabled={updateEvent.isPending}
+                                                    autoFocus
+                                                    placeholder="Event name"
+                                                />
+                                            </div>
                                             <input
                                                 type="text"
-                                                value={editValue}
-                                                onChange={(e) => setEditValue(e.target.value)}
-                                                className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
+                                                value={editKeywords}
+                                                onChange={(e) => setEditKeywords(e.target.value)}
+                                                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
                                                 disabled={updateEvent.isPending}
-                                                autoFocus
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") handleSave(event.id);
-                                                    if (e.key === "Escape") handleCancel();
-                                                }}
+                                                placeholder="Keywords (comma separated)"
                                             />
-                                            <button
-                                                onClick={() => handleSave(event.id)}
-                                                disabled={updateEvent.isPending || !editValue.trim()}
-                                                className="rounded-lg bg-green-500/20 px-3 py-2 text-green-400 transition-colors hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                title="Save"
-                                            >
-                                                {updateEvent.isPending ? (
-                                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-green-400 border-t-transparent"></div>
-                                                ) : (
-                                                    "✓"
-                                                )}
-                                            </button>
-                                            <button
-                                                onClick={handleCancel}
+                                            <textarea
+                                                value={editDescription}
+                                                onChange={(e) => setEditDescription(e.target.value)}
+                                                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
                                                 disabled={updateEvent.isPending}
-                                                className="rounded-lg bg-red-500/20 px-3 py-2 text-red-400 transition-colors hover:bg-red-500/30 disabled:opacity-50"
-                                                title="Cancel"
-                                            >
-                                                ✕
-                                            </button>
+                                                placeholder="Description"
+                                                rows={3}
+                                            />
+                                            <div className="flex justify-end gap-2 mt-2">
+                                                <button
+                                                    onClick={() => handleSave(event.id)}
+                                                    disabled={updateEvent.isPending || !editValue.trim()}
+                                                    className="rounded-lg bg-green-500/20 px-3 py-2 text-green-400 transition-colors hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                                >
+                                                    {updateEvent.isPending ? "Saving..." : "Save Changes"}
+                                                </button>
+                                                <button
+                                                    onClick={handleCancel}
+                                                    disabled={updateEvent.isPending}
+                                                    className="rounded-lg bg-red-500/20 px-3 py-2 text-red-400 transition-colors hover:bg-red-500/30 disabled:opacity-50 text-sm"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <>
-                                            <h3
-                                                className="text-base font-medium text-white cursor-pointer hover:text-gray-300 transition-colors"
-                                                onClick={() => handleEdit(event.id, event.name)}
-                                                title="Click to edit"
-                                            >
-                                                {event.name}
-                                            </h3>
-                                            <p className="text-sm text-gray-500">
-                                                {new Date(event.createdAt).toLocaleDateString("en-US", {
-                                                    year: "numeric",
-                                                    month: "long",
-                                                    day: "numeric",
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                })}
-                                            </p>
-                                        </>
+                                        <div className="w-full">
+                                            <div className="flex items-center justify-between">
+                                                <h3
+                                                    className="text-base font-medium text-white cursor-pointer hover:text-gray-300 transition-colors"
+                                                    onClick={() => handleEdit(event.id, event.name, event.keywords, event.description)}
+                                                    title="Click to edit"
+                                                >
+                                                    {event.name}
+                                                </h3>
+                                                <p className="text-sm text-gray-500">
+                                                    {new Date(event.createdAt).toLocaleDateString("en-US", {
+                                                        year: "numeric",
+                                                        month: "long",
+                                                        day: "numeric",
+                                                    })}
+                                                </p>
+                                            </div>
+                                            {event.description && (
+                                                <p className="text-sm text-gray-400 mt-1 mb-2">
+                                                    {event.description}
+                                                </p>
+                                            )}
+                                            {event.keywords && (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {event.keywords.split(',').map((keyword, i) => (
+                                                        <span key={i} className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-full border border-gray-700">
+                                                            {keyword.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
                             {editingId !== event.id && (
                                 <button
-                                    onClick={() => handleEdit(event.id, event.name)}
+                                    onClick={() => handleEdit(event.id, event.name, event.keywords, event.description)}
                                     className="ml-4 rounded-lg bg-gray-800 px-3 py-2 text-sm text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-gray-700 hover:text-white"
                                 >
                                     Edit
