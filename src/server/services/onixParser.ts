@@ -127,7 +127,7 @@ function extractText(element: any): string | undefined {
     if (typeof element === 'object') {
         const keys = Object.keys(element);
         if (keys.length === 0) return undefined;
-        return extractText(element[keys[0]]);
+        return extractText(element[keys[0]!]);
     }
     return undefined;
 }
