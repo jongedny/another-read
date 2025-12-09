@@ -1,6 +1,8 @@
 import { eventRouter } from "~/server/api/routers/event";
 import { bookRouter } from "~/server/api/routers/book";
 import { contentRouter } from "~/server/api/routers/content";
+import { authRouter } from "~/server/api/routers/auth";
+import { adminRouter } from "~/server/api/routers/admin";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -12,6 +14,8 @@ export const appRouter = createTRPCRouter({
   event: eventRouter,
   book: bookRouter,
   content: contentRouter,
+  auth: authRouter,
+  admin: adminRouter,
 });
 
 // export type definition of API

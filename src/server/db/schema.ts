@@ -55,3 +55,23 @@ export const content = createTable("content", {
   relatedBookIds: text("related_book_ids"), // JSON array of book IDs
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const users = createTable("user", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // Hashed password
+  userTier: text("user_tier").notNull().default("User"), // Admin, Marketer, or User
+  status: text("status").notNull().default("Pending"), // Active, Closed, or Pending
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const passwordResetTokens = createTable("password_reset_token", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

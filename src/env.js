@@ -13,6 +13,7 @@ export const env = createEnv({
       .default("development"),
     OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
     CRON_SECRET: z.string().optional(),
+    JWT_SECRET: z.string().min(32, "JWT secret must be at least 32 characters"),
   },
 
   /**
@@ -33,6 +34,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
+    JWT_SECRET: process.env.JWT_SECRET,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

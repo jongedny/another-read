@@ -11,6 +11,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "~/server/db";
+import { getCurrentUser, type JWTPayload } from "~/server/auth";
 
 /**
  * 1. CONTEXT
@@ -25,8 +26,12 @@ import { db } from "~/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+  // Get the current user from the auth cookie
+  const user = await getCurrentUser();
+
   return {
     db,
+    user,
     ...opts,
   };
 };
@@ -97,6 +102,46 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 /**
+ * Authentication middleware - ensures user is logged in
+ */
+const authMiddleware = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+    },
+  });
+});
+
+/**
+ * Admin middleware - ensures user is logged in and is an Admin
+ */
+const adminMiddleware = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  if (ctx.user.status !== "Active") {
+    throw new Error("FORBIDDEN: Account is not active");
+  }
+
+  if (ctx.user.userTier !== "Admin") {
+    throw new Error("FORBIDDEN: Admin access required");
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+    },
+  });
+});
+
+/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
@@ -104,3 +149,23 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Protected (authenticated) procedure
+ *
+ * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
+ * the session is valid and guarantees `ctx.user` is not null.
+ */
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(authMiddleware);
+
+/**
+ * Admin procedure
+ *
+ * Only accessible to users with Admin tier and Active status.
+ */
+export const adminProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(adminMiddleware);
+
