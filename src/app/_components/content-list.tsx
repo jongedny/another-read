@@ -112,15 +112,48 @@ function RelatedBooksInfo({ bookIds }: { bookIds: string }) {
 
     return (
         <div>
-            <p className="text-xs font-semibold text-gray-400 mb-2">Related Books:</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="text-xs font-semibold text-gray-400 mb-3">Related Books:</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {relatedBooks.map(book => (
-                    <span
+                    <div
                         key={book.id}
-                        className="text-xs bg-gray-800 text-gray-300 px-3 py-1 rounded-full border border-gray-700"
+                        className="group flex flex-col rounded-lg border border-gray-700 bg-gray-800 p-2 transition-all hover:border-gray-600"
                     >
-                        📖 {book.title} by {book.author}
-                    </span>
+                        {/* Book Jacket Thumbnail */}
+                        {book.isbn ? (
+                            <div className="mb-2 overflow-hidden rounded-md bg-gray-700">
+                                <img
+                                    src={`https://cdn.anotherread.com/jackets/${book.isbn}.jpg`}
+                                    alt={`${book.title} book cover`}
+                                    className="h-32 w-full object-cover transition-transform group-hover:scale-105"
+                                    onError={(e) => {
+                                        // Fallback to book icon if image fails to load
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const fallback = target.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'flex';
+                                    }}
+                                />
+                                <div className="hidden h-32 w-full items-center justify-center text-4xl">
+                                    📖
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-2 flex h-32 items-center justify-center rounded-md bg-gray-700 text-4xl">
+                                📖
+                            </div>
+                        )}
+
+                        {/* Book Info */}
+                        <div className="flex-1">
+                            <p className="line-clamp-2 text-xs font-medium text-gray-200">
+                                {book.title}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-400">
+                                {book.author}
+                            </p>
+                        </div>
+                    </div>
                 ))}
             </div>
         </div>

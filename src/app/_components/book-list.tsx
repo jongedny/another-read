@@ -59,10 +59,32 @@ export function BookList() {
                         key={book.id}
                         className="group rounded-lg border border-gray-800 bg-gray-900 p-5 transition-all hover:border-gray-700"
                     >
-                        <div className="mb-4 flex items-start justify-between">
-                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-800 text-xl">
+                        {/* Book Jacket Thumbnail */}
+                        {book.isbn ? (
+                            <div className="mb-4 overflow-hidden rounded-lg bg-gray-800">
+                                <img
+                                    src={`https://cdn.anotherread.com/jackets/${book.isbn}.jpg`}
+                                    alt={`${book.title} book cover`}
+                                    className="h-64 w-full object-cover transition-transform group-hover:scale-105"
+                                    onError={(e) => {
+                                        // Fallback to book icon if image fails to load
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const fallback = target.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'flex';
+                                    }}
+                                />
+                                <div className="hidden h-64 w-full items-center justify-center text-6xl">
+                                    📖
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-4 flex h-64 items-center justify-center rounded-lg bg-gray-800 text-6xl">
                                 📖
                             </div>
+                        )}
+
+                        <div className="mb-4 flex items-start justify-between">
                             {book.price && (
                                 <span className="rounded-full bg-green-500/20 px-3 py-1 text-sm font-semibold text-green-400">
                                     £{book.price}
