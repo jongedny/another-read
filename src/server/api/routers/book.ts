@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { books } from "~/server/db/schema";
@@ -90,6 +90,20 @@ export const bookRouter = createTRPCRouter({
             return book;
         }),
 
+    getByIds: publicProcedure
+        .input(z.object({ ids: z.array(z.number()) }))
+        .query(async ({ ctx, input }) => {
+            if (input.ids.length === 0) {
+                return [];
+            }
+
+            const booksList = await ctx.db.query.books.findMany({
+                where: inArray(books.id, input.ids),
+            });
+
+            return booksList;
+        }),
+
     update: publicProcedure
         .input(
             z.object({
@@ -127,3 +141,4 @@ export const bookRouter = createTRPCRouter({
             await ctx.db.delete(books).where(eq(books.id, input.id));
         }),
 });
+

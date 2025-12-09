@@ -99,16 +99,13 @@ export function ContentList({ eventId }: ContentListProps) {
 
 function RelatedBooksInfo({ bookIds }: { bookIds: string }) {
     const ids = JSON.parse(bookIds) as number[];
-    // Fetch all books with a high limit to ensure we get the related ones
-    const { data: allBooks } = api.book.getAll.useQuery({ limit: 100 });
+    // Fetch only the specific books we need by their IDs
+    const { data: relatedBooks } = api.book.getByIds.useQuery(
+        { ids },
+        { enabled: ids.length > 0 }
+    );
 
-    if (!allBooks || ids.length === 0) {
-        return null;
-    }
-
-    const relatedBooks = allBooks.filter(book => ids.includes(book.id));
-
-    if (relatedBooks.length === 0) {
+    if (!relatedBooks || relatedBooks.length === 0) {
         return null;
     }
 
@@ -161,3 +158,4 @@ function RelatedBooksInfo({ bookIds }: { bookIds: string }) {
         </div>
     );
 }
+
