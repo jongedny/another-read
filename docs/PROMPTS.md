@@ -67,6 +67,40 @@ contentGeneration: {
 }
 ```
 
+### 3. Book Review Prompt
+
+**Purpose**: Reviews and scores how well related books match an event  
+**Used by**: Daily cron job after finding related books  
+**Configuration location**: `OPENAI_CONFIG.bookReview`
+
+**Customizable parameters**:
+- `model`: The OpenAI model to use (default: "gpt-4o-mini")
+- `temperature`: Creativity level 0-1 (default: 0.3 - lower for consistent scoring)
+- `maxTokens`: Maximum response length (default: 2000)
+- `systemMessage`: The AI's role/personality
+- `userPrompt`: The main prompt template with 2 variables:
+  - `eventName`: Name of the event
+  - `booksInfo`: Formatted list of books with descriptions (max 20 books)
+
+**What it does**:
+- Evaluates each book's relevance to the event
+- Provides a score from 0-10 (10 = best recommendation, 0 = worst)
+- Gives a short explanation (max 100 words) for each score
+- Stores results in the `eventBooks` table as `aiScore` and `aiExplanation`
+
+**Example customization**:
+```typescript
+// In src/server/config/prompts.ts
+bookReview: {
+    temperature: 0.5, // Slightly more varied scoring
+    
+    systemMessage: "You are an expert librarian with deep knowledge of literature...",
+    
+    userPrompt: (eventName, booksInfo) => 
+        `Rate these books for ${eventName} on a scale of 1-10...`,
+}
+```
+
 ## How to Modify Prompts
 
 1. Open `src/server/config/prompts.ts`
@@ -98,7 +132,7 @@ You can use any OpenAI model:
 
 ## Temperature Guide
 
-- `0.0-0.3`: Focused and deterministic (good for factual content)
+- `0.0-0.3`: Focused and deterministic (good for factual content, scoring)
 - `0.4-0.7`: Balanced creativity (default for events)
 - `0.8-1.0`: More creative and varied (default for blog content)
 

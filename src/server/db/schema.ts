@@ -44,6 +44,8 @@ export const eventBooks = createTable("event_book", {
   eventId: integer("event_id").notNull().references(() => events.id),
   bookId: integer("book_id").notNull().references(() => books.id),
   matchScore: integer("match_score"), // Optional: store relevance score
+  aiScore: integer("ai_score"), // AI review score (0-10)
+  aiExplanation: text("ai_explanation"), // AI explanation of the score
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

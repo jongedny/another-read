@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchDailyUKEvents } from "~/server/services/openai";
+import { fetchDailyUKEvents, reviewBookRecommendations } from "~/server/services/openai";
 import { db } from "~/server/db";
 import { events, books, eventBooks } from "~/server/db/schema";
 import { env } from "~/env";
+import { eq } from "drizzle-orm";
 
 /**
  * Helper function to find and store related books for an event
@@ -121,23 +122,70 @@ export async function GET(request: NextRequest) {
 
         // Automatically find related books for each newly created event
         let totalBooksFound = 0;
+        let totalReviewsGenerated = 0;
+
         for (const event of insertedEvents) {
             try {
                 const booksFound = await findRelatedBooksForEvent(event.id, event.keywords, event.description);
                 totalBooksFound += booksFound;
                 console.log(`[Cron API] Found ${booksFound} related books for event "${event.name}"`);
+
+                // If books were found, get AI reviews for them
+                if (booksFound > 0) {
+                    // Fetch the related books with their details
+                    const relatedBookRecords = await db.query.eventBooks.findMany({
+                        where: eq(eventBooks.eventId, event.id),
+                    });
+
+                    if (relatedBookRecords.length > 0) {
+                        const bookIds = relatedBookRecords.map(r => r.bookId);
+                        const bookDetails = await db.query.books.findMany({
+                            where: (books, { inArray }) => inArray(books.id, bookIds),
+                        });
+
+                        // Get AI reviews for the books (max 20)
+                        const reviews = await reviewBookRecommendations(
+                            event.name,
+                            bookDetails.map(b => ({
+                                title: b.title,
+                                author: b.author,
+                                description: b.description,
+                            }))
+                        );
+
+                        // Update the eventBooks records with AI scores and explanations
+                        for (const review of reviews) {
+                            const matchingBook = bookDetails.find(b => b.title === review.bookTitle);
+                            if (matchingBook) {
+                                const eventBookRecord = relatedBookRecords.find(r => r.bookId === matchingBook.id);
+                                if (eventBookRecord) {
+                                    await db.update(eventBooks)
+                                        .set({
+                                            aiScore: review.score,
+                                            aiExplanation: review.explanation,
+                                        })
+                                        .where(eq(eventBooks.id, eventBookRecord.id));
+                                    totalReviewsGenerated++;
+                                }
+                            }
+                        }
+
+                        console.log(`[Cron API] Generated ${reviews.length} AI reviews for event "${event.name}"`);
+                    }
+                }
             } catch (error) {
-                console.error(`[Cron API] Error finding related books for event ${event.id}:`, error);
+                console.error(`[Cron API] Error processing books for event ${event.id}:`, error);
                 // Continue with other events even if one fails
             }
         }
 
         return NextResponse.json({
             success: true,
-            message: `Successfully saved ${dailyEvents.length} events and found ${totalBooksFound} related books`,
+            message: `Successfully saved ${dailyEvents.length} events, found ${totalBooksFound} related books, and generated ${totalReviewsGenerated} AI reviews`,
             count: dailyEvents.length,
             events: dailyEvents,
             relatedBooksFound: totalBooksFound,
+            aiReviewsGenerated: totalReviewsGenerated,
         });
     } catch (error) {
         console.error("[Cron API] Error:", error);

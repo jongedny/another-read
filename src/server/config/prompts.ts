@@ -6,27 +6,27 @@
  */
 
 export const OPENAI_CONFIG = {
-    /**
-     * Model to use for all OpenAI API calls
-     * Options: "gpt-4o-mini", "gpt-4o", "gpt-4-turbo", etc.
-     */
-    defaultModel: "gpt-4o-mini" as const,
+  /**
+   * Model to use for all OpenAI API calls
+   * Options: "gpt-4o-mini", "gpt-4o", "gpt-4-turbo", etc.
+   */
+  defaultModel: "gpt-4o-mini" as const,
+
+  /**
+   * Configuration for daily UK events generation
+   */
+  dailyEvents: {
+    model: "gpt-4o-mini",
+    temperature: 0.7,
+    maxTokens: 500,
+
+    systemMessage: "You are a helpful assistant that provides information about UK events and celebrations. Always respond with valid JSON arrays only.",
 
     /**
-     * Configuration for daily UK events generation
+     * Main prompt for generating daily events
+     * Available variables: {dateString} - formatted as "25 December"
      */
-    dailyEvents: {
-        model: "gpt-4o-mini",
-        temperature: 0.7,
-        maxTokens: 500,
-
-        systemMessage: "You are a helpful assistant that provides information about UK events and celebrations. Always respond with valid JSON arrays only.",
-
-        /**
-         * Main prompt for generating daily events
-         * Available variables: {dateString} - formatted as "25 December"
-         */
-        userPrompt: (dateString: string) => `Suggest up to 4 events, celebrations, or awareness days that are observed or could be celebrated in the United Kingdom on ${dateString}. 
+    userPrompt: (dateString: string) => `Suggest up to 4 events, celebrations, or awareness days that are observed or could be celebrated in the United Kingdom on ${dateString}. 
 
 These can include:
 - Major holidays (e.g., Christmas Day on 25th December)
@@ -52,32 +52,32 @@ Please respond with ONLY a JSON array of objects in this exact format:
 ]
 
 Do not include any other text or explanation. Always provide at least 1-2 events.`,
-    },
+  },
+
+  /**
+   * Configuration for blog content generation about events and books
+   */
+  contentGeneration: {
+    model: "gpt-4o-mini",
+    temperature: 0.8,
+    maxTokens: 2000,
+
+    systemMessage: "You are a creative content writer specializing in book recommendations and literary events. Always respond with valid JSON arrays only.",
 
     /**
-     * Configuration for blog content generation about events and books
+     * Main prompt for generating blog content
+     * Available variables:
+     * - {eventName}: Name of the event
+     * - {eventDescription}: Description of the event (or 'No description provided')
+     * - {keywords}: Comma-separated keywords (or 'None')
+     * - {booksInfo}: Formatted list of related books (or 'No related books found.')
      */
-    contentGeneration: {
-        model: "gpt-4o-mini",
-        temperature: 0.8,
-        maxTokens: 2000,
-
-        systemMessage: "You are a creative content writer specializing in book recommendations and literary events. Always respond with valid JSON arrays only.",
-
-        /**
-         * Main prompt for generating blog content
-         * Available variables:
-         * - {eventName}: Name of the event
-         * - {eventDescription}: Description of the event (or 'No description provided')
-         * - {keywords}: Comma-separated keywords (or 'None')
-         * - {booksInfo}: Formatted list of related books (or 'No related books found.')
-         */
-        userPrompt: (
-            eventName: string,
-            eventDescription: string,
-            keywords: string,
-            booksInfo: string
-        ) => `Write 4 short blog post pieces (200-300 words each) about the event "${eventName}" and its related books.
+    userPrompt: (
+      eventName: string,
+      eventDescription: string,
+      keywords: string,
+      booksInfo: string
+    ) => `Write 4 short blog post pieces (200-300 words each) about the event "${eventName}" and its related books.
 
 Event Details:
 - Name: ${eventName}
@@ -103,5 +103,50 @@ Please respond with ONLY a JSON array of objects in this exact format:
 ]
 
 Do not include any other text or explanation. Always provide exactly 4 blog posts.`,
-    },
+  },
+
+  /**
+   * Configuration for reviewing book-event relevance
+   */
+  bookReview: {
+    model: "gpt-4o-mini",
+    temperature: 0.3, // Lower temperature for more consistent scoring
+    maxTokens: 2000,
+
+    systemMessage: "You are a critical book reviewer and literary expert. You provide honest, constructive assessments of book recommendations. Always respond with valid JSON arrays only.",
+
+    /**
+     * Main prompt for reviewing book recommendations
+     * Available variables:
+     * - {eventName}: Name of the event
+     * - {booksInfo}: Formatted list of books with descriptions
+     */
+    userPrompt: (
+      eventName: string,
+      booksInfo: string
+    ) => `Judge whether each of these books is a good reading recommendation for ${eventName}.
+
+For each book, provide:
+1. score: A score out of 10 (10 being the best recommendation, 0 being the worst)
+2. explanation: A short explanation (max 100 words) of your decision
+
+Be critical but constructive in your scoring and critique. Consider:
+- How well the book's themes align with the event
+- Whether the book would genuinely interest someone celebrating/observing this event
+- The relevance of the book's content to the event's purpose or meaning
+
+Books to review:
+${booksInfo}
+
+Please respond with ONLY a JSON array of objects in this exact format:
+[
+  {
+    "bookTitle": "Exact title of the book",
+    "score": 8,
+    "explanation": "Your explanation here..."
+  }
+]
+
+Do not include any other text or explanation. Provide one review object for each book listed above.`,
+  },
 } as const;

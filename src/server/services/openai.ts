@@ -225,3 +225,117 @@ export async function generateEventContent(
         );
     }
 }
+
+export interface BookReview {
+    bookTitle: string;
+    score: number;
+    explanation: string;
+}
+
+/**
+ * Reviews book recommendations for an event using OpenAI
+ * @param eventName - Name of the event
+ * @param books - Array of books with title, author, and description
+ * @param userId - Optional user ID for credit tracking
+ * @param eventId - Optional event ID for metadata
+ * @returns Array of book reviews with scores and explanations
+ */
+export async function reviewBookRecommendations(
+    eventName: string,
+    books: Array<{ title: string; author: string; description: string | null }>,
+    userId?: number,
+    eventId?: number
+): Promise<BookReview[]> {
+    if (books.length === 0) {
+        return [];
+    }
+
+    // Limit to 20 books as requested
+    const booksToReview = books.slice(0, 20);
+
+    const booksInfo = booksToReview
+        .map((b, index) => `${index + 1}. "${b.title}" by ${b.author}${b.description ? `\n   Description: ${b.description}` : ''}`)
+        .join('\n\n');
+
+    const config = OPENAI_CONFIG.bookReview;
+
+    try {
+        const completion = await openai.chat.completions.create({
+            model: config.model,
+            messages: [
+                {
+                    role: "system",
+                    content: config.systemMessage,
+                },
+                {
+                    role: "user",
+                    content: config.userPrompt(eventName, booksInfo),
+                },
+            ],
+            temperature: config.temperature,
+            max_tokens: config.maxTokens,
+        });
+
+        const responseContent = completion.choices[0]?.message?.content;
+        if (!responseContent) {
+            throw new Error("No response from OpenAI");
+        }
+
+        console.log(`[OpenAI Service] Raw book review response:`, responseContent);
+
+        // Parse the JSON response
+        const reviews = JSON.parse(responseContent.trim()) as BookReview[];
+
+        // Validate that we got an array of objects
+        if (!Array.isArray(reviews)) {
+            throw new Error("OpenAI response is not an array");
+        }
+
+        // Filter and validate review objects
+        const validReviews = reviews.filter((review) => {
+            return (
+                typeof review === "object" &&
+                review !== null &&
+                typeof review.bookTitle === "string" &&
+                review.bookTitle.length > 0 &&
+                typeof review.score === "number" &&
+                review.score >= 0 &&
+                review.score <= 10 &&
+                typeof review.explanation === "string" &&
+                review.explanation.length > 0
+            );
+        });
+
+        console.log(`[OpenAI Service] Generated ${validReviews.length} book reviews for event "${eventName}"`);
+
+        // Track credit usage if userId is provided
+        if (userId) {
+            const tokensUsed = (completion.usage?.total_tokens) || 0;
+            const creditsDeducted = calculateCreditsFromTokens(tokensUsed);
+
+            await deductCredits(
+                userId,
+                "book_review",
+                tokensUsed,
+                creditsDeducted,
+                {
+                    model: config.model,
+                    promptTokens: completion.usage?.prompt_tokens,
+                    completionTokens: completion.usage?.completion_tokens,
+                    eventId,
+                    eventName,
+                    booksReviewed: validReviews.length,
+                }
+            );
+
+            console.log(`[OpenAI Service] Deducted ${creditsDeducted} credits from user ${userId}`);
+        }
+
+        return validReviews;
+    } catch (error) {
+        console.error("[OpenAI Service] Error reviewing books:", error);
+        throw new Error(
+            `Failed to review books from OpenAI: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+    }
+}
