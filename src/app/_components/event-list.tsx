@@ -200,22 +200,6 @@ function EventActions({ eventId }: { eventId: number }) {
     const utils = api.useUtils();
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    const findRelatedBooks = api.event.findRelatedBooks.useMutation({
-        onSuccess: (data) => {
-            setMessage({
-                type: 'success',
-                text: data.cached
-                    ? `${data.count} related books (cached)`
-                    : `Found ${data.count} related books!`
-            });
-            setTimeout(() => setMessage(null), 3000);
-        },
-        onError: (error) => {
-            setMessage({ type: 'error', text: error.message });
-            setTimeout(() => setMessage(null), 3000);
-        },
-    });
-
     const suggestContent = api.event.suggestContent.useMutation({
         onSuccess: (data) => {
             setMessage({ type: 'success', text: `Generated ${data.count} content pieces!` });
@@ -231,23 +215,15 @@ function EventActions({ eventId }: { eventId: number }) {
     return (
         <div className="mt-3 space-y-2">
             <div className="flex flex-wrap gap-2">
-                <button
-                    onClick={() => findRelatedBooks.mutate({ eventId })}
-                    disabled={findRelatedBooks.isPending}
-                    className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm text-blue-400 transition-colors hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                <a
+                    href={`/books?eventId=${eventId}`}
+                    className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm text-blue-400 transition-colors hover:bg-blue-500/30"
                 >
-                    {findRelatedBooks.isPending ? (
-                        <span className="flex items-center gap-2">
-                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400 border-t-transparent"></div>
-                            Finding...
-                        </span>
-                    ) : (
-                        <span className="flex items-center gap-1.5">
-                            <Icon name="menu_book" className="text-base" />
-                            Related Books
-                        </span>
-                    )}
-                </button>
+                    <span className="flex items-center gap-1.5">
+                        <Icon name="menu_book" className="text-base" />
+                        Related Books
+                    </span>
+                </a>
                 <button
                     onClick={() => suggestContent.mutate({ eventId })}
                     disabled={suggestContent.isPending}

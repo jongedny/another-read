@@ -3,7 +3,14 @@ import { api, HydrateClient } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function BooksPage() {
+export default async function BooksPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ eventId?: string }>;
+}) {
+    const params = await searchParams;
+    const eventId = params.eventId ? parseInt(params.eventId) : undefined;
+
     void api.book.getAll.prefetch();
 
     return (
@@ -22,7 +29,7 @@ export default async function BooksPage() {
 
                     {/* Book List */}
                     <div>
-                        <BookList />
+                        <BookList eventId={eventId} />
                     </div>
                 </div>
             </main>

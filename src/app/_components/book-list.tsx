@@ -6,15 +6,31 @@ import { Icon } from "./icon";
 
 type ViewMode = "grid" | "list";
 
-export function BookList() {
+export function BookList({ eventId }: { eventId?: number }) {
     const [currentPage, setCurrentPage] = useState(0);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const pageSize = 20;
 
-    const { data: books, isLoading } = api.book.getAll.useQuery({
-        limit: pageSize,
-        offset: currentPage * pageSize,
-    });
+    // Conditionally fetch either all books or related books based on eventId
+    const { data: allBooks, isLoading: isLoadingAll } = api.book.getAll.useQuery(
+        {
+            limit: pageSize,
+            offset: currentPage * pageSize,
+        },
+        {
+            enabled: !eventId, // Only fetch all books if no eventId is provided
+        }
+    );
+
+    const { data: relatedBooks, isLoading: isLoadingRelated } = api.event.getRelatedBooks.useQuery(
+        { eventId: eventId! },
+        {
+            enabled: !!eventId, // Only fetch related books if eventId is provided
+        }
+    );
+
+    const books = eventId ? relatedBooks : allBooks;
+    const isLoading = eventId ? isLoadingRelated : isLoadingAll;
 
     if (isLoading) {
         return (
@@ -38,8 +54,18 @@ export function BookList() {
                         No books found
                     </h3>
                     <p className="text-gray-500">
-                        The library is empty. Check back later!
+                        {eventId
+                            ? "No related books found for this event."
+                            : "The library is empty. Check back later!"}
                     </p>
+                    {eventId && (
+                        <a
+                            href="/books"
+                            className="mt-4 inline-block rounded-lg bg-blue-500/20 px-4 py-2 text-sm text-blue-400 transition-colors hover:bg-blue-500/30"
+                        >
+                            View All Books
+                        </a>
+                    )}
                 </div>
             </div>
         );
@@ -47,10 +73,28 @@ export function BookList() {
 
     return (
         <div className="w-full">
+            {/* Filter indicator */}
+            {eventId && (
+                <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                        <Icon name="filter_list" className="text-blue-400" />
+                        <span className="text-sm text-blue-300">
+                            Showing books related to this event
+                        </span>
+                    </div>
+                    <a
+                        href="/books"
+                        className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm text-blue-400 transition-colors hover:bg-blue-500/30"
+                    >
+                        Clear Filter
+                    </a>
+                </div>
+            )}
+
             <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <h2 className="text-xl font-semibold text-white">
-                        All Books
+                        {eventId ? "Related Books" : "All Books"}
                     </h2>
                     <span className="rounded-full bg-gray-800 px-3 py-1 text-sm text-gray-400">
                         {books.length} {books.length === 1 ? "book" : "books"}
@@ -62,8 +106,8 @@ export function BookList() {
                     <button
                         onClick={() => setViewMode("grid")}
                         className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${viewMode === "grid"
-                                ? "bg-gray-800 text-white"
-                                : "text-gray-400 hover:text-white"
+                            ? "bg-gray-800 text-white"
+                            : "text-gray-400 hover:text-white"
                             }`}
                         title="Grid view"
                     >
@@ -73,8 +117,8 @@ export function BookList() {
                     <button
                         onClick={() => setViewMode("list")}
                         className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${viewMode === "list"
-                                ? "bg-gray-800 text-white"
-                                : "text-gray-400 hover:text-white"
+                            ? "bg-gray-800 text-white"
+                            : "text-gray-400 hover:text-white"
                             }`}
                         title="List view"
                     >
@@ -214,26 +258,28 @@ export function BookList() {
                 </div>
             )}
 
-            {/* Pagination */}
-            <div className="mt-8 flex items-center justify-center gap-4">
-                <button
-                    onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                    disabled={currentPage === 0}
-                    className="rounded-lg bg-gray-800 px-6 py-3 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    ← Previous
-                </button>
-                <span className="text-gray-400">
-                    Page {currentPage + 1}
-                </span>
-                <button
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                    disabled={books.length < pageSize}
-                    className="rounded-lg bg-gray-800 px-6 py-3 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    Next →
-                </button>
-            </div>
+            {/* Pagination - only show when not filtering by event */}
+            {!eventId && (
+                <div className="mt-8 flex items-center justify-center gap-4">
+                    <button
+                        onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                        disabled={currentPage === 0}
+                        className="rounded-lg bg-gray-800 px-6 py-3 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        ← Previous
+                    </button>
+                    <span className="text-gray-400">
+                        Page {currentPage + 1}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage((p) => p + 1)}
+                        disabled={books.length < pageSize}
+                        className="rounded-lg bg-gray-800 px-6 py-3 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Next →
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

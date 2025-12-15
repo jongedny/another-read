@@ -1,8 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchDailyUKEvents } from "~/server/services/openai";
 import { db } from "~/server/db";
-import { events } from "~/server/db/schema";
+import { events, books, eventBooks } from "~/server/db/schema";
 import { env } from "~/env";
+
+/**
+ * Helper function to find and store related books for an event
+ * @param eventId - The ID of the event
+ * @param keywords - Comma-separated keywords
+ * @param description - Event description
+ * @returns Number of books found
+ */
+async function findRelatedBooksForEvent(
+    eventId: number,
+    keywords: string | null,
+    description: string | null
+): Promise<number> {
+    // Parse event keywords
+    const eventKeywords = keywords
+        ? keywords.split(',').map(k => k.trim().toLowerCase())
+        : [];
+
+    if (eventKeywords.length === 0 && !description) {
+        return 0;
+    }
+
+    // Find matching books
+    const allBooks = await db.query.books.findMany();
+
+    const matchedBooks = allBooks
+        .map(book => {
+            let score = 0;
+            const searchText = `${book.title} ${book.description || ''} ${book.keywords || ''}`.toLowerCase();
+
+            // Check each event keyword
+            eventKeywords.forEach(keyword => {
+                if (searchText.includes(keyword)) {
+                    score += 10;
+                }
+            });
+
+            // Check event description words
+            if (description) {
+                const descWords = description.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+                descWords.forEach(word => {
+                    if (searchText.includes(word)) {
+                        score += 2;
+                    }
+                });
+            }
+
+            return { book, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10); // Limit to top 10 matches
+
+    // Store the relationships
+    if (matchedBooks.length > 0) {
+        await db.insert(eventBooks).values(
+            matchedBooks.map(({ book, score }) => ({
+                eventId: eventId,
+                bookId: book.id,
+                matchScore: score,
+            }))
+        );
+    }
+
+    return matchedBooks.length;
+}
+
 
 /**
  * API Route for scheduled daily event fetching
@@ -48,15 +115,29 @@ export async function GET(request: NextRequest) {
             keywords: event.keywords.join(", "), // Store as comma-separated string
             description: event.description,
         }));
-        await db.insert(events).values(values);
+        const insertedEvents = await db.insert(events).values(values).returning();
 
         console.log(`[Cron API] Successfully saved ${dailyEvents.length} events:`, dailyEvents);
 
+        // Automatically find related books for each newly created event
+        let totalBooksFound = 0;
+        for (const event of insertedEvents) {
+            try {
+                const booksFound = await findRelatedBooksForEvent(event.id, event.keywords, event.description);
+                totalBooksFound += booksFound;
+                console.log(`[Cron API] Found ${booksFound} related books for event "${event.name}"`);
+            } catch (error) {
+                console.error(`[Cron API] Error finding related books for event ${event.id}:`, error);
+                // Continue with other events even if one fails
+            }
+        }
+
         return NextResponse.json({
             success: true,
-            message: `Successfully saved ${dailyEvents.length} events`,
+            message: `Successfully saved ${dailyEvents.length} events and found ${totalBooksFound} related books`,
             count: dailyEvents.length,
             events: dailyEvents,
+            relatedBooksFound: totalBooksFound,
         });
     } catch (error) {
         console.error("[Cron API] Error:", error);
