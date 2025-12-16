@@ -115,16 +115,32 @@ export async function GET(request: NextRequest) {
             name: event.name,
             keywords: event.keywords.join(", "), // Store as comma-separated string
             description: event.description,
+            eventDate: new Date(event.date), // Parse the date string to a Date object
         }));
         const insertedEvents = await db.insert(events).values(values).returning();
 
         console.log(`[Cron API] Successfully saved ${dailyEvents.length} events:`, dailyEvents);
 
-        // Automatically find related books for each newly created event
+        // Automatically find related books for events happening today
+        // Filter to only process events with today's date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
+
+        const todaysEvents = insertedEvents.filter(event => {
+            if (!event.eventDate) return false;
+            const eventDate = new Date(event.eventDate);
+            eventDate.setHours(0, 0, 0, 0);
+            return eventDate >= today && eventDate < tomorrow;
+        });
+
+        console.log(`[Cron API] Found ${todaysEvents.length} events for today out of ${insertedEvents.length} total events`);
+
         let totalBooksFound = 0;
         let totalReviewsGenerated = 0;
 
-        for (const event of insertedEvents) {
+        for (const event of todaysEvents) {
             try {
                 const booksFound = await findRelatedBooksForEvent(event.id, event.keywords, event.description);
                 totalBooksFound += booksFound;
@@ -181,8 +197,9 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            message: `Successfully saved ${dailyEvents.length} events, found ${totalBooksFound} related books, and generated ${totalReviewsGenerated} AI reviews`,
+            message: `Successfully saved ${dailyEvents.length} events (${todaysEvents.length} for today), found ${totalBooksFound} related books, and generated ${totalReviewsGenerated} AI reviews`,
             count: dailyEvents.length,
+            todaysEventCount: todaysEvents.length,
             events: dailyEvents,
             relatedBooksFound: totalBooksFound,
             aiReviewsGenerated: totalReviewsGenerated,

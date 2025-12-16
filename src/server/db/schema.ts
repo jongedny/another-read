@@ -17,6 +17,7 @@ export const events = createTable("event", {
   name: text("name").notNull(),
   keywords: text("keywords"), // Comma-separated keywords or JSON array
   description: text("description"), // Event description (max 200 words)
+  eventDate: timestamp("event_date"), // Date the event is scheduled for
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

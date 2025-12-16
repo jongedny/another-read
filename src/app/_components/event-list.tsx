@@ -9,6 +9,7 @@ export function EventList() {
     const [editValue, setEditValue] = useState("");
     const [editKeywords, setEditKeywords] = useState("");
     const [editDescription, setEditDescription] = useState("");
+    const [editEventDate, setEditEventDate] = useState("");
 
     const utils = api.useUtils();
     const { data: events, isLoading } = api.event.getAll.useQuery();
@@ -19,14 +20,16 @@ export function EventList() {
             setEditValue("");
             setEditKeywords("");
             setEditDescription("");
+            setEditEventDate("");
         },
     });
 
-    const handleEdit = (id: number, currentName: string, currentKeywords: string | null, currentDescription: string | null) => {
+    const handleEdit = (id: number, currentName: string, currentKeywords: string | null, currentDescription: string | null, currentEventDate: Date | null) => {
         setEditingId(id);
         setEditValue(currentName);
         setEditKeywords(currentKeywords || "");
         setEditDescription(currentDescription || "");
+        setEditEventDate(currentEventDate ? new Date(currentEventDate).toISOString().split('T')[0]! : "");
     };
 
     const handleSave = async (id: number) => {
@@ -36,6 +39,7 @@ export function EventList() {
             name: editValue,
             keywords: editKeywords.trim() || undefined,
             description: editDescription.trim() || undefined,
+            eventDate: editEventDate ? new Date(editEventDate) : undefined,
         });
     };
 
@@ -44,6 +48,7 @@ export function EventList() {
         setEditValue("");
         setEditKeywords("");
         setEditDescription("");
+        setEditEventDate("");
     };
 
     if (isLoading) {
@@ -118,6 +123,13 @@ export function EventList() {
                                                 disabled={updateEvent.isPending}
                                                 placeholder="Keywords (comma separated)"
                                             />
+                                            <input
+                                                type="date"
+                                                value={editEventDate}
+                                                onChange={(e) => setEditEventDate(e.target.value)}
+                                                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600"
+                                                disabled={updateEvent.isPending}
+                                            />
                                             <textarea
                                                 value={editDescription}
                                                 onChange={(e) => setEditDescription(e.target.value)}
@@ -148,18 +160,30 @@ export function EventList() {
                                             <div className="flex items-center justify-between">
                                                 <h3
                                                     className="text-base font-medium text-white cursor-pointer hover:text-gray-300 transition-colors"
-                                                    onClick={() => handleEdit(event.id, event.name, event.keywords, event.description)}
+                                                    onClick={() => handleEdit(event.id, event.name, event.keywords, event.description, event.eventDate)}
                                                     title="Click to edit"
                                                 >
                                                     {event.name}
                                                 </h3>
-                                                <p className="text-sm text-gray-500">
-                                                    {new Date(event.createdAt).toLocaleDateString("en-US", {
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                    })}
-                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    {event.eventDate && (
+                                                        <span className="text-sm text-blue-400 flex items-center gap-1">
+                                                            <Icon name="event" className="text-sm" />
+                                                            {new Date(event.eventDate).toLocaleDateString("en-US", {
+                                                                year: "numeric",
+                                                                month: "short",
+                                                                day: "numeric",
+                                                            })}
+                                                        </span>
+                                                    )}
+                                                    <p className="text-sm text-gray-500">
+                                                        {new Date(event.createdAt).toLocaleDateString("en-US", {
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        })}
+                                                    </p>
+                                                </div>
                                             </div>
                                             {event.description && (
                                                 <p className="text-sm text-gray-400 mt-1 mb-2">
@@ -182,7 +206,7 @@ export function EventList() {
                             </div>
                             {editingId !== event.id && (
                                 <button
-                                    onClick={() => handleEdit(event.id, event.name, event.keywords, event.description)}
+                                    onClick={() => handleEdit(event.id, event.name, event.keywords, event.description, event.eventDate)}
                                     className="ml-4 rounded-lg bg-gray-800 px-3 py-2 text-sm text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-gray-700 hover:text-white"
                                 >
                                     Edit

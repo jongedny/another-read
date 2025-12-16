@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, inArray } from "drizzle-orm";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { books } from "~/server/db/schema";
+import { books, eventBooks, events } from "~/server/db/schema";
 
 export const bookRouter = createTRPCRouter({
     create: publicProcedure
@@ -88,6 +88,49 @@ export const bookRouter = createTRPCRouter({
             });
 
             return book;
+        }),
+
+    getWithEvents: publicProcedure
+        .input(z.object({ id: z.number() }))
+        .query(async ({ ctx, input }) => {
+            const book = await ctx.db.query.books.findFirst({
+                where: (books, { eq }) => eq(books.id, input.id),
+            });
+
+            if (!book) {
+                return null;
+            }
+
+            // Get all event relationships for this book
+            const relations = await ctx.db.query.eventBooks.findMany({
+                where: (eventBooks, { eq }) => eq(eventBooks.bookId, input.id),
+                orderBy: (eventBooks, { desc }) => [desc(eventBooks.createdAt)],
+            });
+
+            // Get the event details
+            const relatedEvents = [];
+            if (relations.length > 0) {
+                const eventIds = relations.map(r => r.eventId);
+                const eventsList = await ctx.db.query.events.findMany({
+                    where: (events, { inArray }) => inArray(events.id, eventIds),
+                });
+
+                // Combine event data with AI scores
+                relatedEvents.push(...eventsList.map(event => {
+                    const relation = relations.find(r => r.eventId === event.id);
+                    return {
+                        ...event,
+                        aiScore: relation?.aiScore,
+                        aiExplanation: relation?.aiExplanation,
+                        matchScore: relation?.matchScore,
+                    };
+                }));
+            }
+
+            return {
+                ...book,
+                relatedEvents,
+            };
         }),
 
     getByIds: publicProcedure

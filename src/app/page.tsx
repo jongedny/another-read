@@ -1,5 +1,5 @@
 // Another Read - Event Management App
-import { CreateEvent } from "~/app/_components/create-event";
+import Link from "next/link";
 import { EventList } from "~/app/_components/event-list";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -13,18 +13,21 @@ export default async function Home() {
       <main className="min-h-screen bg-gray-950">
         <div className="mx-auto max-w-7xl px-8 py-12">
           {/* Header */}
-          <div className="mb-12">
-            <h1 className="mb-2 text-4xl font-bold text-white">
-              Events
-            </h1>
-            <p className="text-gray-400">
-              Create and manage your events
-            </p>
-          </div>
-
-          {/* Create Event Form */}
-          <div className="mb-12">
-            <CreateEvent />
+          <div className="mb-12 flex items-center justify-between">
+            <div>
+              <h1 className="mb-2 text-4xl font-bold text-white">
+                Events
+              </h1>
+              <p className="text-gray-400">
+                Create and manage your events
+              </p>
+            </div>
+            <Link
+              href="/events/create"
+              className="rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-colors hover:bg-gray-200"
+            >
+              Create New Event
+            </Link>
           </div>
 
           {/* Event List */}

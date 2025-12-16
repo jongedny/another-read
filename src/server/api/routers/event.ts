@@ -11,12 +11,14 @@ export const eventRouter = createTRPCRouter({
             name: z.string().min(1, "Event name is required"),
             keywords: z.string().optional(),
             description: z.string().optional(),
+            eventDate: z.date().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             await ctx.db.insert(events).values({
                 name: input.name,
                 keywords: input.keywords,
                 description: input.description,
+                eventDate: input.eventDate,
             });
         }),
 
@@ -26,6 +28,7 @@ export const eventRouter = createTRPCRouter({
                 name: z.string().min(1),
                 keywords: z.string().optional(),
                 description: z.string().optional(),
+                eventDate: z.date().optional(),
             }))
         }))
         .mutation(async ({ ctx, input }) => {
@@ -52,6 +55,7 @@ export const eventRouter = createTRPCRouter({
             name: z.string().min(1, "Event name is required"),
             keywords: z.string().optional(),
             description: z.string().optional(),
+            eventDate: z.date().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             const updated = await ctx.db
@@ -60,6 +64,7 @@ export const eventRouter = createTRPCRouter({
                     name: input.name,
                     keywords: input.keywords,
                     description: input.description,
+                    eventDate: input.eventDate,
                 })
                 .where(eq(events.id, input.id))
                 .returning();

@@ -72,7 +72,9 @@ export async function fetchDailyUKEvents(userId?: number): Promise<DailyEvent[]>
                     Array.isArray(event.keywords) &&
                     event.keywords.length > 0 &&
                     typeof event.description === "string" &&
-                    event.description.length > 0
+                    event.description.length > 0 &&
+                    typeof event.date === "string" &&
+                    event.date.length > 0
                 );
             })
             .slice(0, 4);

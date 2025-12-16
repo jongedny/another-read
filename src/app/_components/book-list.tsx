@@ -132,9 +132,10 @@ export function BookList({ eventId }: { eventId?: number }) {
             {viewMode === "grid" && (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {books.map((book) => (
-                        <div
+                        <a
                             key={book.id}
-                            className="group rounded-lg border border-gray-800 bg-gray-900 p-5 transition-all hover:border-gray-700"
+                            href={`/books/${book.id}`}
+                            className="group rounded-lg border border-gray-800 bg-gray-900 p-5 transition-all hover:border-gray-700 hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer"
                         >
                             {/* Book Jacket Thumbnail */}
                             {book.isbn ? (
@@ -198,7 +199,7 @@ export function BookList({ eventId }: { eventId?: number }) {
                                     </span>
                                 )}
                             </div>
-                        </div>
+                        </a>
                     ))}
                 </div>
             )}
@@ -207,9 +208,10 @@ export function BookList({ eventId }: { eventId?: number }) {
             {viewMode === "list" && (
                 <div className="space-y-2">
                     {books.map((book) => (
-                        <div
+                        <a
                             key={book.id}
-                            className="group rounded-lg border border-gray-800 bg-gray-900 p-4 transition-all hover:border-gray-700"
+                            href={`/books/${book.id}`}
+                            className="group block rounded-lg border border-gray-800 bg-gray-900 p-4 transition-all hover:border-gray-700 hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer"
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
@@ -253,7 +255,7 @@ export function BookList({ eventId }: { eventId?: number }) {
                                     </span>
                                 )}
                             </div>
-                        </div>
+                        </a>
                     ))}
                 </div>
             )}
