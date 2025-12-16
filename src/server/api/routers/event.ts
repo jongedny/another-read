@@ -304,4 +304,23 @@ export const eventRouter = createTRPCRouter({
                 count: storedContent.length
             };
         }),
+
+    delete: publicProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+            // Delete in the correct order to respect foreign key constraints
+            // First delete content related to this event
+            await ctx.db.delete(content).where(eq(content.eventId, input.id));
+
+            // Then delete event-book relationships
+            await ctx.db.delete(eventBooks).where(eq(eventBooks.eventId, input.id));
+
+            // Finally delete the event itself
+            const deleted = await ctx.db
+                .delete(events)
+                .where(eq(events.id, input.id))
+                .returning();
+
+            return deleted[0];
+        }),
 });
