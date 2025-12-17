@@ -62,86 +62,47 @@ export default function BookDetailPage() {
                     <span>Back to Books</span>
                 </button>
 
-                {/* Book Details */}
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                    {/* Left Column - Book Cover */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-8">
-                            {bookData.isbn ? (
-                                <div className="overflow-hidden rounded-lg bg-gray-800">
-                                    <img
-                                        src={`https://cdn.anotherread.com/jackets/${bookData.isbn}.jpg`}
-                                        alt={`${bookData.title} book cover`}
-                                        className="w-full object-cover"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                            const fallback = target.nextElementSibling as HTMLElement;
-                                            if (fallback) fallback.style.display = 'flex';
-                                        }}
-                                    />
-                                    <div className="hidden h-96 w-full items-center justify-center">
-                                        <Icon name="menu_book" className="text-8xl text-gray-600" />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex h-96 items-center justify-center rounded-lg bg-gray-800">
-                                    <Icon name="menu_book" className="text-8xl text-gray-600" />
-                                </div>
-                            )}
-
-                            {/* Price Badge */}
-                            {bookData.price && (
-                                <div className="mt-4 rounded-lg bg-green-500/20 px-4 py-3 text-center">
-                                    <span className="text-2xl font-bold text-green-400">
-                                        £{bookData.price}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                {/* Title, Author, and Metadata - Full Width */}
+                <div className="mb-8">
+                    {/* Title and Author */}
+                    <div className="mb-6">
+                        <h1 className="mb-2 text-4xl font-bold text-white">
+                            {bookData.title}
+                        </h1>
+                        <p className="text-xl text-gray-400">
+                            by {bookData.author}
+                        </p>
                     </div>
 
-                    {/* Right Column - Book Information */}
+                    {/* Metadata */}
+                    <div className="flex flex-wrap gap-2">
+                        {bookData.isbn && (
+                            <span className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
+                                <span className="text-gray-500">ISBN:</span> {bookData.isbn}
+                            </span>
+                        )}
+                        {bookData.publicationDate && (
+                            <span className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
+                                <span className="text-gray-500">Published:</span> {bookData.publicationDate}
+                            </span>
+                        )}
+                        {bookData.price && (
+                            <span className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
+                                <span className="text-gray-500">Price:</span> £{bookData.price}
+                            </span>
+                        )}
+                        {bookData.genre && (
+                            <span className="rounded-md bg-purple-500/20 px-3 py-1.5 text-sm text-purple-400">
+                                {bookData.genre}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Book Details - Two Column Layout */}
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    {/* Left Column - Book Information */}
                     <div className="lg:col-span-2">
-                        {/* Title and Author */}
-                        <div className="mb-6">
-                            <h1 className="mb-2 text-4xl font-bold text-white">
-                                {bookData.title}
-                            </h1>
-                            <p className="text-xl text-gray-400">
-                                by {bookData.author}
-                            </p>
-                        </div>
-
-                        {/* Metadata */}
-                        <div className="mb-6 flex flex-wrap gap-2">
-                            {bookData.isbn && (
-                                <span className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
-                                    <span className="text-gray-500">ISBN:</span> {bookData.isbn}
-                                </span>
-                            )}
-                            {bookData.publicationDate && (
-                                <span className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
-                                    <Icon name="calendar_today" className="mr-1 inline text-base" />
-                                    {bookData.publicationDate}
-                                </span>
-                            )}
-                            {bookData.genre && (
-                                <span className="rounded-md bg-purple-500/20 px-3 py-1.5 text-sm text-purple-400">
-                                    <Icon name="category" className="mr-1 inline text-base" />
-                                    {bookData.genre}
-                                </span>
-                            )}
-                            {bookData.status && (
-                                <span className={`rounded-md px-3 py-1.5 text-sm ${bookData.status === 'active'
-                                        ? 'bg-green-500/20 text-green-400'
-                                        : 'bg-gray-800 text-gray-500'
-                                    }`}>
-                                    {bookData.status}
-                                </span>
-                            )}
-                        </div>
-
                         {/* Description */}
                         {bookData.description && (
                             <div className="mb-8 rounded-lg border border-gray-800 bg-gray-900 p-6">
@@ -226,12 +187,12 @@ export default function BookDetailPage() {
                                                 {event.aiScore !== null && event.aiScore !== undefined && (
                                                     <div className="flex-shrink-0">
                                                         <div className={`rounded-lg px-3 py-2 text-center ${event.aiScore >= 8
-                                                                ? 'bg-green-500/20 text-green-400'
-                                                                : event.aiScore >= 6
-                                                                    ? 'bg-blue-500/20 text-blue-400'
-                                                                    : event.aiScore >= 4
-                                                                        ? 'bg-yellow-500/20 text-yellow-400'
-                                                                        : 'bg-red-500/20 text-red-400'
+                                                            ? 'bg-green-500/20 text-green-400'
+                                                            : event.aiScore >= 6
+                                                                ? 'bg-blue-500/20 text-blue-400'
+                                                                : event.aiScore >= 4
+                                                                    ? 'bg-yellow-500/20 text-yellow-400'
+                                                                    : 'bg-red-500/20 text-red-400'
                                                             }`}>
                                                             <div className="text-xs font-medium">AI Score</div>
                                                             <div className="text-2xl font-bold">{event.aiScore}</div>
@@ -263,6 +224,34 @@ export default function BookDetailPage() {
                                             )}
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right Column - Book Cover */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-8">
+                            {bookData.isbn ? (
+                                <div className="overflow-hidden rounded-lg bg-gray-800">
+                                    <img
+                                        src={`https://cdn.anotherread.com/jackets/${bookData.isbn}.jpg`}
+                                        alt={`${bookData.title} book cover`}
+                                        className="w-full object-cover"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const fallback = target.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.style.display = 'flex';
+                                        }}
+                                    />
+                                    <div className="hidden h-96 w-full items-center justify-center">
+                                        <Icon name="menu_book" className="text-8xl text-gray-600" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex h-96 items-center justify-center rounded-lg bg-gray-800">
+                                    <Icon name="menu_book" className="text-8xl text-gray-600" />
                                 </div>
                             )}
                         </div>

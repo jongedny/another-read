@@ -25,12 +25,9 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
                 <div className="mx-auto max-w-7xl px-8 py-12">
                     {/* Header */}
                     <div className="mb-12">
-                        <h1 className="mb-2 text-4xl font-bold text-white">
+                        <h1 className="text-4xl font-bold text-white">
                             Content
                         </h1>
-                        <p className="text-gray-400">
-                            AI-generated content pieces for events
-                        </p>
                     </div>
 
                     {/* Content List */}

@@ -12,6 +12,8 @@ export function ContentList({ eventId }: ContentListProps) {
         ? api.content.getByEvent.useQuery({ eventId })
         : api.content.getAll.useQuery();
 
+    const { data: allEvents } = api.event.getAll.useQuery();
+
     const { data: event } = eventId
         ? api.event.getAll.useQuery(undefined, {
             select: (events) => events.find(e => e.id === eventId)
@@ -49,49 +51,88 @@ export function ContentList({ eventId }: ContentListProps) {
         );
     }
 
+    // Group content by event
+    const contentByEvent = contentItems.reduce((groups, item) => {
+        const eventId = item.eventId;
+        if (!groups[eventId]) {
+            groups[eventId] = [];
+        }
+        groups[eventId]!.push(item);
+        return groups;
+    }, {} as Record<number, typeof contentItems>);
+
+    // Sort groups by event date (descending - most recent first)
+    const sortedGroups = Object.entries(contentByEvent).sort(([eventIdA], [eventIdB]) => {
+        const eventA = allEvents?.find(e => e.id === parseInt(eventIdA));
+        const eventB = allEvents?.find(e => e.id === parseInt(eventIdB));
+
+        const dateA = eventA?.eventDate ? new Date(eventA.eventDate).getTime() : 0;
+        const dateB = eventB?.eventDate ? new Date(eventB.eventDate).getTime() : 0;
+
+        return dateB - dateA; // Descending order
+    });
+
     return (
         <div className="w-full">
-            <div className="mb-6 flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-semibold text-white">
-                        {eventId && event ? `Content for ${event.name}` : 'All Content'}
-                    </h2>
-                    {eventId && event?.description && (
-                        <p className="text-sm text-gray-400 mt-1">{event.description}</p>
-                    )}
-                </div>
-                <span className="rounded-full bg-gray-800 px-3 py-1 text-sm text-gray-400">
-                    {contentItems.length} {contentItems.length === 1 ? "piece" : "pieces"}
-                </span>
-            </div>
-            <div className="space-y-4">
-                {contentItems.map((item) => (
-                    <div
-                        key={item.id}
-                        className="group rounded-lg border border-gray-800 bg-gray-900 p-6 transition-colors hover:border-gray-700"
-                    >
-                        <div className="mb-3 flex items-start justify-between">
-                            <h3 className="text-lg font-semibold text-white">
-                                {item.title}
-                            </h3>
-                            <span className="text-xs text-gray-500">
-                                {new Date(item.createdAt).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                })}
-                            </span>
-                        </div>
-                        <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                            {item.content}
-                        </div>
-                        {item.relatedBookIds && (
-                            <div className="mt-4 pt-4 border-t border-gray-800">
-                                <RelatedBooksInfo bookIds={item.relatedBookIds} eventId={item.eventId} />
+            <div className="space-y-8">
+                {sortedGroups.map(([eventIdStr, items]) => {
+                    const eventIdNum = parseInt(eventIdStr);
+                    const eventData = allEvents?.find(e => e.id === eventIdNum);
+
+                    // Format event date
+                    const eventDateStr = eventData?.eventDate
+                        ? new Date(eventData.eventDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                        })
+                        : "";
+
+                    return (
+                        <div key={eventIdStr}>
+                            {/* Event Heading with Date */}
+                            <h2 className="text-lg font-semibold mb-4">
+                                <div className="text-white">
+                                    {eventDateStr || "No Date"}
+                                </div>
+                                <div className="text-gray-400">
+                                    {eventData?.name || `Event #${eventIdStr}`}
+                                </div>
+                            </h2>
+
+                            {/* Content Items for this Event */}
+                            <div className="space-y-4">
+                                {items.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="group rounded-lg border border-gray-800 bg-gray-900 p-6 transition-colors hover:border-gray-700"
+                                    >
+                                        <div className="mb-3 flex items-start justify-between">
+                                            <h3 className="text-lg font-semibold text-white">
+                                                {item.title}
+                                            </h3>
+                                            <span className="text-xs text-gray-500">
+                                                {new Date(item.createdAt).toLocaleDateString("en-US", {
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                })}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                            {item.content}
+                                        </div>
+                                        {item.relatedBookIds && (
+                                            <div className="mt-4 pt-4 border-t border-gray-800">
+                                                <RelatedBooksInfo bookIds={item.relatedBookIds} eventId={item.eventId} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        )}
-                    </div>
-                ))}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

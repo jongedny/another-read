@@ -6,7 +6,7 @@ import { Icon } from "./icon";
 
 type ViewMode = "grid" | "list";
 
-export function BookList({ eventId }: { eventId?: number }) {
+export function BookList({ eventId, showViewToggleAtTop }: { eventId?: number; showViewToggleAtTop?: boolean }) {
     const [currentPage, setCurrentPage] = useState(0);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const pageSize = 20;
@@ -104,17 +104,8 @@ export function BookList({ eventId }: { eventId?: number }) {
                 </div>
             )}
 
-            <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-semibold text-white">
-                        {eventId ? "Related Books" : "All Books"}
-                    </h2>
-                    <span className="rounded-full bg-gray-800 px-3 py-1 text-sm text-gray-400">
-                        {books.length} {books.length === 1 ? "book" : "books"}
-                    </span>
-                </div>
-
-                {/* View Toggle */}
+            {/* View Toggle */}
+            <div className={`flex justify-end ${showViewToggleAtTop ? '-mt-24 mb-12' : 'mb-6'}`}>
                 <div className="flex items-center gap-2 rounded-lg bg-gray-900 border border-gray-800 p-1">
                     <button
                         onClick={() => setViewMode("grid")}
@@ -251,41 +242,36 @@ export function BookList({ eventId }: { eventId?: number }) {
                             >
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-start gap-3 mb-2">
-                                            <Icon name="menu_book" className="text-2xl text-gray-600 flex-shrink-0 mt-1" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between gap-2 mb-1">
-                                                    <h3 className="text-base font-medium text-white">
-                                                        {book.title}
-                                                    </h3>
-                                                    {aiData?.score !== null && aiData?.score !== undefined && (
-                                                        <span
-                                                            className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${aiData.score >= 8
-                                                                    ? 'bg-green-500/20 text-green-400'
-                                                                    : aiData.score >= 5
-                                                                        ? 'bg-blue-500/20 text-blue-400'
-                                                                        : 'bg-gray-500/20 text-gray-400'
-                                                                }`}
-                                                        >
-                                                            AI: {aiData.score}/10
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-gray-400 mb-2">
-                                                    by {book.author}
-                                                </p>
-                                                {aiData?.explanation && (
-                                                    <p className="text-xs text-gray-500 leading-relaxed mb-2">
-                                                        {aiData.explanation}
-                                                    </p>
-                                                )}
-                                                {book.description && !aiData?.explanation && (
-                                                    <p className="line-clamp-2 text-sm text-gray-500">
-                                                        {book.description.replace(/<[^>]*>/g, '')}
-                                                    </p>
-                                                )}
-                                            </div>
+                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                            <h3 className="text-base font-medium text-white">
+                                                {book.title}
+                                            </h3>
+                                            {aiData?.score !== null && aiData?.score !== undefined && (
+                                                <span
+                                                    className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${aiData.score >= 8
+                                                        ? 'bg-green-500/20 text-green-400'
+                                                        : aiData.score >= 5
+                                                            ? 'bg-blue-500/20 text-blue-400'
+                                                            : 'bg-gray-500/20 text-gray-400'
+                                                        }`}
+                                                >
+                                                    AI: {aiData.score}/10
+                                                </span>
+                                            )}
                                         </div>
+                                        <p className="text-sm text-gray-400 mb-2">
+                                            by {book.author}
+                                        </p>
+                                        {aiData?.explanation && (
+                                            <p className="text-xs text-gray-500 leading-relaxed mb-2">
+                                                {aiData.explanation}
+                                            </p>
+                                        )}
+                                        {book.description && !aiData?.explanation && (
+                                            <p className="line-clamp-2 text-sm text-gray-500">
+                                                {book.description.replace(/<[^>]*>/g, '')}
+                                            </p>
+                                        )}
 
                                         <div className="flex flex-wrap gap-2 mt-3">
                                             {book.isbn && (

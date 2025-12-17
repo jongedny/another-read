@@ -141,18 +141,13 @@ export default function UserManagementPage() {
         <main className="min-h-screen bg-gray-950 px-8 py-12">
             <div className="mx-auto max-w-7xl">
                 {/* Header */}
-                <div className="mb-8 flex items-center justify-between">
-                    <div>
-                        <h1 className="mb-2 text-4xl font-bold text-white">
-                            User Management
-                        </h1>
-                        <p className="text-gray-400">
-                            Manage user accounts, roles, and permissions
-                        </p>
-                    </div>
+                <div className="mb-12 flex items-center justify-between">
+                    <h1 className="text-4xl font-bold text-white">
+                        User Management
+                    </h1>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 font-semibold text-white transition-all hover:from-blue-500 hover:to-blue-400"
+                        className="rounded-lg bg-white px-6 py-3 font-semibold text-gray-900 transition hover:bg-gray-100"
                     >
                         + Add User
                     </button>
