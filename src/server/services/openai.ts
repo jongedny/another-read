@@ -77,6 +77,17 @@ export async function fetchDailyUKEvents(userId?: number): Promise<DailyEvent[]>
                     event.date.length > 0
                 );
             })
+            .map((event) => {
+                // Correct the year in the date to use the current year
+                // OpenAI sometimes returns incorrect years, so we replace it with the current year
+                const currentYear = today.getFullYear();
+                const dateParts = event.date.split('-');
+                if (dateParts.length === 3) {
+                    dateParts[0] = currentYear.toString();
+                    event.date = dateParts.join('-');
+                }
+                return event;
+            })
             .slice(0, 4);
 
         console.log(`[OpenAI Service] Fetched ${validEvents.length} events for ${dateString}:`, validEvents);
