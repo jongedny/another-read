@@ -6,6 +6,35 @@ import { Icon } from "./icon";
 
 type ViewMode = "grid" | "list";
 
+// Helper function to format contributors for display
+function formatContributors(contributors?: any[]): string {
+    if (!contributors || contributors.length === 0) return "Unknown";
+
+    // Group by role
+    const authors = contributors.filter(c => c.role === 'author');
+    const illustrators = contributors.filter(c => c.role === 'illustrator');
+    const others = contributors.filter(c => c.role !== 'author' && c.role !== 'illustrator');
+
+    const parts: string[] = [];
+
+    if (authors.length > 0) {
+        const authorNames = authors.map(a => a.name).join(', ');
+        parts.push(authorNames);
+    }
+
+    if (illustrators.length > 0) {
+        const illustratorNames = illustrators.map(i => i.name).join(', ');
+        parts.push(`Illustrated by ${illustratorNames}`);
+    }
+
+    if (others.length > 0 && parts.length === 0) {
+        // If no authors or illustrators, show other contributors
+        parts.push(others.map(o => o.name).join(', '));
+    }
+
+    return parts.join(' • ') || "Unknown";
+}
+
 export function BookList({ eventId, showViewToggleAtTop }: { eventId?: number; showViewToggleAtTop?: boolean }) {
     const [currentPage, setCurrentPage] = useState(0);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -193,7 +222,7 @@ export function BookList({ eventId, showViewToggleAtTop }: { eventId?: number; s
                                 </h3>
 
                                 <p className="mb-3 text-sm text-gray-400">
-                                    by {book.author}
+                                    by {formatContributors((book as any).contributors)}
                                 </p>
 
                                 {aiData?.explanation && (
@@ -260,7 +289,7 @@ export function BookList({ eventId, showViewToggleAtTop }: { eventId?: number; s
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-400 mb-2">
-                                            by {book.author}
+                                            by {formatContributors((book as any).contributors)}
                                         </p>
                                         {aiData?.explanation && (
                                             <p className="text-xs text-gray-500 leading-relaxed mb-2">

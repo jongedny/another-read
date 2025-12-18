@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, or, like, sql } from "drizzle-orm";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
-import { events, books, eventBooks, content } from "~/server/db/schema";
+import { events, books, eventBooks, content, bookContributors, contributors } from "~/server/db/schema";
 import { generateEventContent } from "~/server/services/openai";
 import { processEventRelatedBooks } from "~/server/services/events";
 
@@ -193,7 +193,39 @@ export const eventRouter = createTRPCRouter({
                 where: (books, { inArray }) => inArray(books.id, bookIds),
             });
 
-            return relatedBooks;
+            // Fetch contributors for all books
+            const booksWithContributors = await Promise.all(
+                relatedBooks.map(async (book) => {
+                    const bookContributorRelations = await ctx.db.query.bookContributors.findMany({
+                        where: (bookContributors, { eq }) => eq(bookContributors.bookId, book.id),
+                        orderBy: (bookContributors, { asc }) => [asc(bookContributors.sequenceNumber)],
+                    });
+
+                    const bookContributorsData = [];
+                    if (bookContributorRelations.length > 0) {
+                        const contributorIds = bookContributorRelations.map(r => r.contributorId);
+                        const contributorsList = await ctx.db.query.contributors.findMany({
+                            where: (contributors, { inArray }) => inArray(contributors.id, contributorIds),
+                        });
+
+                        bookContributorsData.push(...contributorsList.map(contributor => {
+                            const relation = bookContributorRelations.find(r => r.contributorId === contributor.id);
+                            return {
+                                ...contributor,
+                                role: relation?.role,
+                                sequenceNumber: relation?.sequenceNumber,
+                            };
+                        }));
+                    }
+
+                    return {
+                        ...book,
+                        contributors: bookContributorsData,
+                    };
+                })
+            );
+
+            return booksWithContributors;
         }),
 
     getEventBooksWithScores: publicProcedure
@@ -302,11 +334,17 @@ export const eventRouter = createTRPCRouter({
                 event.name,
                 event.description,
                 event.keywords,
-                highQualityBooks.map(b => ({
-                    title: b.title,
-                    author: b.author,
-                    description: b.description,
-                })),
+                highQualityBooks.map(b => {
+                    // Get primary author from contributors
+                    const authors = (b as any).contributors?.filter((c: any) => c.role === 'author') || [];
+                    const primaryAuthor = authors.length > 0 ? authors[0].name : 'Unknown';
+
+                    return {
+                        title: b.title,
+                        author: primaryAuthor,
+                        description: b.description,
+                    };
+                }),
                 ctx.user.userId, // Pass userId for credit tracking
                 input.eventId // Pass eventId for metadata
             );

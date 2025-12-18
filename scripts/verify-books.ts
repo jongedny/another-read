@@ -12,7 +12,8 @@ async function verifyBooks() {
     const sampleBooks = allBooks.slice(0, 3);
     sampleBooks.forEach((book, index) => {
         console.log(`\n${index + 1}. "${book.title}"`);
-        console.log(`   Author: ${book.author}`);
+        console.log(`   Contributors: ${book.contributorIds || 'None'}`);
+        console.log(`   Publisher: ${book.publisherId || 'None'}`);
         console.log(`   ISBN: ${book.isbn}`);
         console.log(`   Price: ${book.price}`);
         console.log(`   Status: ${book.status}`);
@@ -20,10 +21,10 @@ async function verifyBooks() {
 
     // Verify data integrity
     const booksWithoutTitle = allBooks.filter((b) => !b.title);
-    const booksWithoutAuthor = allBooks.filter((b) => !b.author);
+    const booksWithoutContributors = allBooks.filter((b) => !b.contributorIds);
 
     console.log(`\n✓ Books without title: ${booksWithoutTitle.length}`);
-    console.log(`✓ Books without author: ${booksWithoutAuthor.length}`);
+    console.log(`✓ Books without contributors: ${booksWithoutContributors.length}`);
 
     console.log("\n✅ Verification complete!");
 }

@@ -96,11 +96,17 @@ export async function generateAIReviewsForEvent(
     // Get AI reviews for the books (max 20)
     const reviews = await reviewBookRecommendations(
         eventName,
-        bookDetails.map(b => ({
-            title: b.title,
-            author: b.author,
-            description: b.description,
-        }))
+        bookDetails.map(b => {
+            // Extract primary author from contributors (if available)
+            const contributorIds = b.contributorIds ? JSON.parse(b.contributorIds) : [];
+            const primaryAuthor = contributorIds.length > 0 ? 'Various Authors' : 'Unknown';
+
+            return {
+                title: b.title,
+                author: primaryAuthor,
+                description: b.description,
+            };
+        })
     );
 
     // Update the eventBooks records with AI scores and explanations

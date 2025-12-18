@@ -21,10 +21,37 @@ export const events = createTable("event", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const contributors = createTable("contributor", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  biography: text("biography"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const bookContributors = createTable("book_contributor", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  contributorId: integer("contributor_id").notNull().references(() => contributors.id),
+  role: text("role").notNull(), // e.g., 'author', 'illustrator', 'editor'
+  sequenceNumber: integer("sequence_number"), // For ordering multiple contributors
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const publishers = createTable("publisher", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  website: text("website"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const books = createTable("book", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  author: text("author").notNull(),
+  contributorIds: text("contributor_ids"), // JSON array of contributor IDs for backward compatibility
+  publisherId: integer("publisher_id").references(() => publishers.id),
   description: text("description"),
   isbn: text("isbn"),
   publicationDate: text("publication_date"),

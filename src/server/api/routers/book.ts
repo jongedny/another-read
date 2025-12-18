@@ -2,14 +2,14 @@ import { z } from "zod";
 import { eq, inArray } from "drizzle-orm";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { books, eventBooks, events } from "~/server/db/schema";
+import { books, eventBooks, events, bookContributors, contributors, publishers } from "~/server/db/schema";
 
 export const bookRouter = createTRPCRouter({
     create: publicProcedure
         .input(
             z.object({
                 title: z.string().min(1, "Title is required"),
-                author: z.string().min(1, "Author is required"),
+                contributorIds: z.string().optional(),
                 description: z.string().optional(),
                 isbn: z.string().optional(),
                 publicationDate: z.string().optional(),
@@ -33,7 +33,7 @@ export const bookRouter = createTRPCRouter({
                 books: z.array(
                     z.object({
                         title: z.string(),
-                        author: z.string(),
+                        contributorIds: z.string().optional(),
                         description: z.string().optional(),
                         isbn: z.string().optional(),
                         publicationDate: z.string().optional(),
@@ -77,7 +77,39 @@ export const bookRouter = createTRPCRouter({
                 offset,
             });
 
-            return allBooks;
+            // Fetch contributors for all books
+            const booksWithContributors = await Promise.all(
+                allBooks.map(async (book) => {
+                    const bookContributorRelations = await ctx.db.query.bookContributors.findMany({
+                        where: (bookContributors, { eq }) => eq(bookContributors.bookId, book.id),
+                        orderBy: (bookContributors, { asc }) => [asc(bookContributors.sequenceNumber)],
+                    });
+
+                    const bookContributorsData = [];
+                    if (bookContributorRelations.length > 0) {
+                        const contributorIds = bookContributorRelations.map(r => r.contributorId);
+                        const contributorsList = await ctx.db.query.contributors.findMany({
+                            where: (contributors, { inArray }) => inArray(contributors.id, contributorIds),
+                        });
+
+                        bookContributorsData.push(...contributorsList.map(contributor => {
+                            const relation = bookContributorRelations.find(r => r.contributorId === contributor.id);
+                            return {
+                                ...contributor,
+                                role: relation?.role,
+                                sequenceNumber: relation?.sequenceNumber,
+                            };
+                        }));
+                    }
+
+                    return {
+                        ...book,
+                        contributors: bookContributorsData,
+                    };
+                })
+            );
+
+            return booksWithContributors;
         }),
 
     getById: publicProcedure
@@ -87,7 +119,37 @@ export const bookRouter = createTRPCRouter({
                 where: (books, { eq }) => eq(books.id, input.id),
             });
 
-            return book;
+            if (!book) {
+                return null;
+            }
+
+            // Get contributors for this book
+            const bookContributorRelations = await ctx.db.query.bookContributors.findMany({
+                where: (bookContributors, { eq }) => eq(bookContributors.bookId, input.id),
+                orderBy: (bookContributors, { asc }) => [asc(bookContributors.sequenceNumber)],
+            });
+
+            const bookContributorsData = [];
+            if (bookContributorRelations.length > 0) {
+                const contributorIds = bookContributorRelations.map(r => r.contributorId);
+                const contributorsList = await ctx.db.query.contributors.findMany({
+                    where: (contributors, { inArray }) => inArray(contributors.id, contributorIds),
+                });
+
+                bookContributorsData.push(...contributorsList.map(contributor => {
+                    const relation = bookContributorRelations.find(r => r.contributorId === contributor.id);
+                    return {
+                        ...contributor,
+                        role: relation?.role,
+                        sequenceNumber: relation?.sequenceNumber,
+                    };
+                }));
+            }
+
+            return {
+                ...book,
+                contributors: bookContributorsData,
+            };
         }),
 
     getWithEvents: publicProcedure
@@ -99,6 +161,29 @@ export const bookRouter = createTRPCRouter({
 
             if (!book) {
                 return null;
+            }
+
+            // Get contributors for this book
+            const bookContributorRelations = await ctx.db.query.bookContributors.findMany({
+                where: (bookContributors, { eq }) => eq(bookContributors.bookId, input.id),
+                orderBy: (bookContributors, { asc }) => [asc(bookContributors.sequenceNumber)],
+            });
+
+            const bookContributorsData = [];
+            if (bookContributorRelations.length > 0) {
+                const contributorIds = bookContributorRelations.map(r => r.contributorId);
+                const contributorsList = await ctx.db.query.contributors.findMany({
+                    where: (contributors, { inArray }) => inArray(contributors.id, contributorIds),
+                });
+
+                bookContributorsData.push(...contributorsList.map(contributor => {
+                    const relation = bookContributorRelations.find(r => r.contributorId === contributor.id);
+                    return {
+                        ...contributor,
+                        role: relation?.role,
+                        sequenceNumber: relation?.sequenceNumber,
+                    };
+                }));
             }
 
             // Get all event relationships for this book
@@ -129,6 +214,7 @@ export const bookRouter = createTRPCRouter({
 
             return {
                 ...book,
+                contributors: bookContributorsData,
                 relatedEvents,
             };
         }),
@@ -152,7 +238,7 @@ export const bookRouter = createTRPCRouter({
             z.object({
                 id: z.number(),
                 title: z.string().min(1, "Title is required").optional(),
-                author: z.string().min(1, "Author is required").optional(),
+                contributorIds: z.string().optional(),
                 description: z.string().optional(),
                 isbn: z.string().optional(),
                 publicationDate: z.string().optional(),

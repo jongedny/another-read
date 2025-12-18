@@ -4,6 +4,43 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import { Icon } from "~/app/_components/icon";
 
+// Helper function to format contributors for display
+function formatContributors(contributors?: any[]): string {
+    if (!contributors || contributors.length === 0) return "Unknown";
+
+    // Group by role
+    const authors = contributors.filter(c => c.role === 'author');
+    const illustrators = contributors.filter(c => c.role === 'illustrator');
+    const editors = contributors.filter(c => c.role === 'editor');
+    const translators = contributors.filter(c => c.role === 'translator');
+    const others = contributors.filter(c => !['author', 'illustrator', 'editor', 'translator'].includes(c.role));
+
+    const parts: string[] = [];
+
+    if (authors.length > 0) {
+        parts.push(authors.map(a => a.name).join(', '));
+    }
+
+    if (illustrators.length > 0) {
+        parts.push(`Illustrated by ${illustrators.map(i => i.name).join(', ')}`);
+    }
+
+    if (editors.length > 0) {
+        parts.push(`Edited by ${editors.map(e => e.name).join(', ')}`);
+    }
+
+    if (translators.length > 0) {
+        parts.push(`Translated by ${translators.map(t => t.name).join(', ')}`);
+    }
+
+    if (others.length > 0 && parts.length === 0) {
+        // If no specific roles, show other contributors
+        parts.push(others.map(o => o.name).join(', '));
+    }
+
+    return parts.join(' • ') || "Unknown";
+}
+
 export default function BookDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -70,7 +107,7 @@ export default function BookDetailPage() {
                             {bookData.title}
                         </h1>
                         <p className="text-xl text-gray-400">
-                            by {bookData.author}
+                            by {formatContributors(bookData.contributors)}
                         </p>
                     </div>
 

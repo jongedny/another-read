@@ -219,7 +219,9 @@ function RelatedBooksInfo({ bookIds, eventId }: { bookIds: string; eventId: numb
                                     )}
                                 </div>
                                 <p className="text-xs text-gray-400 mb-2">
-                                    {book.author}
+                                    {(book as any).contributors?.length > 0
+                                        ? (book as any).contributors.map((c: any) => c.name).join(', ')
+                                        : 'Unknown'}
                                 </p>
                                 {aiData?.explanation && (
                                     <p className="text-xs text-gray-500 leading-relaxed">

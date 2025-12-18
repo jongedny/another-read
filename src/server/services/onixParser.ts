@@ -69,14 +69,21 @@ const ONIX_TAG_MAP: Record<string, string> = {
     'b220': 'ExtentUnit',
 };
 
+export interface ParsedContributor {
+    name: string;
+    role: string; // ONIX role code (e.g., 'A01' for author, 'A12' for illustrator)
+    sequenceNumber?: number;
+    biography?: string;
+}
+
 export interface ParsedBook {
     recordReference?: string;
     isbn13?: string;
     isbn10?: string;
     title?: string;
     subtitle?: string;
-    author?: string;
-    contributors?: string[];
+    author?: string; // Primary author for backward compatibility
+    contributors?: ParsedContributor[]; // Detailed contributor information
     description?: string;
     publisher?: string;
     imprint?: string;
@@ -187,19 +194,24 @@ function extractTitle(titleDetail: any): { title?: string; subtitle?: string } {
 /**
  * Extract contributors (authors, illustrators, etc.)
  */
-function extractContributors(contributors: any): { author?: string; contributors?: string[] } {
+function extractContributors(contributors: any): { author?: string; contributors?: ParsedContributor[] } {
     if (!contributors) return {};
 
     const contributorList = Array.isArray(contributors) ? contributors : [contributors];
-    const allContributors: string[] = [];
+    const allContributors: ParsedContributor[] = [];
     let primaryAuthor: string | undefined;
 
     for (const contributor of contributorList) {
         const role = extractText(contributor.ContributorRole || contributor.b035);
         const name = extractText(contributor.PersonName || contributor.b036);
+        const sequenceNumber = extractText(contributor.SequenceNumber || contributor.b034);
 
         if (name) {
-            allContributors.push(name);
+            allContributors.push({
+                name,
+                role: role || 'contributor', // Default to 'contributor' if no role specified
+                sequenceNumber: sequenceNumber ? parseInt(sequenceNumber, 10) : undefined,
+            });
 
             // A01 = Author
             if (role === 'A01' && !primaryAuthor) {
