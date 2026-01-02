@@ -24,23 +24,32 @@ export const OPENAI_CONFIG = {
 
     /**
      * Main prompt for generating daily events
-     * Available variables: {dateString} - formatted as "25 December"
+     * Available variables: {dateString} - formatted as "25 December", {isoDate} - formatted as "2025-12-25"
      */
-    userPrompt: (dateString: string) => `Suggest up to 4 diverse and interesting events for ${dateString} that would appeal to children under the age of 16 in the United Kingdom.
+    userPrompt: (dateString: string, isoDate: string) => `Suggest up to 4 diverse and interesting events for ${dateString} (${isoDate}) that would appeal to children under the age of 16 in the United Kingdom.
+
+CRITICAL DATE ACCURACY REQUIREMENT:
+- ALL events MUST have actually occurred, been celebrated, or be observed specifically on ${dateString}
+- For birthdays: The person MUST have been born on this EXACT day and month (e.g., if suggesting J.R.R. Tolkien's birthday, verify he was actually born on January 3rd, not January 1st)
+- For historical events: The event MUST have occurred on this EXACT day and month in history
+- For deaths/commemorations: The person MUST have died on this EXACT day and month
+- Do NOT suggest events that are "close to" or "around" this date - they must be ON this date
+- Double-check your facts before suggesting any birthday or historical event
+- The date field in your response MUST be ${isoDate}
 
 IMPORTANT: Provide a VARIETY of different types of events. Do not repeat the same event type or theme across multiple suggestions.
 
 Event types to consider (choose DIFFERENT types for variety):
 - Historic events and anniversaries ("On this day in history...")
-- Famous birthdays (people born on this date)
-- Famous deaths/commemorations (significant people who died on this date)
-- Religious festivals and observances
-- National awareness days (e.g., National Dog Day)
-- Major holidays and celebrations
-- Seasonal events and traditions
-- International days observed in the UK
-- Scientific discoveries or achievements made on this date
-- Cultural or sporting milestones
+- Famous birthdays (people born on THIS EXACT DATE)
+- Famous deaths/commemorations (people who died on THIS EXACT DATE)
+- Religious festivals and observances (celebrated on THIS DATE)
+- National awareness days (e.g., National Dog Day - if it falls on THIS DATE)
+- Major holidays and celebrations (that occur on THIS DATE)
+- Seasonal events and traditions (specific to THIS DATE)
+- International days observed in the UK (on THIS DATE)
+- Scientific discoveries or achievements made on THIS EXACT DATE
+- Cultural or sporting milestones (that occurred on THIS DATE)
 
 Guidelines:
 - Each event should be AGE-APPROPRIATE for children under 16
@@ -48,13 +57,13 @@ Guidelines:
 - Ensure VARIETY - don't suggest similar events (e.g., avoid multiple "preparation" or "countdown" events)
 - Prioritize events that are interesting, educational, or fun for children
 - If it's close to a major holiday, include ONE event about it, but also include other diverse events
-- Focus on events that happened or are celebrated specifically on ${dateString}
+- VERIFY ACCURACY: Only suggest events that genuinely occurred or are celebrated on ${dateString}
 
 For each event, provide:
 1. name: The event name (clear and engaging for children)
 2. keywords: An array of 3-5 relevant keywords related to the event
 3. description: A brief, child-friendly description of the event (maximum 200 words)
-4. date: The date in ISO format (YYYY-MM-DD)
+4. date: MUST be ${isoDate} (the exact date provided)
 
 Please respond with ONLY a JSON array of objects in this exact format:
 [
@@ -62,7 +71,7 @@ Please respond with ONLY a JSON array of objects in this exact format:
     "name": "Event Name 1",
     "keywords": ["keyword1", "keyword2", "keyword3"],
     "description": "A brief description of the event...",
-    "date": "2025-12-17"
+    "date": "${isoDate}"
   }
 ]
 

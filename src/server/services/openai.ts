@@ -28,10 +28,13 @@ export async function fetchDailyUKEvents(userId?: number, recentEventNames?: str
         month: "long",
     });
 
+    // Generate ISO date string (YYYY-MM-DD) for the current date
+    const isoDate = today.toISOString().split('T')[0];
+
     const config = OPENAI_CONFIG.dailyEvents;
 
     // Build the user prompt with recent events context if provided
-    let userPrompt = config.userPrompt(dateString);
+    let userPrompt = config.userPrompt(dateString, isoDate!);
 
     if (recentEventNames && recentEventNames.length > 0) {
         userPrompt += `\n\nIMPORTANT: The following events have been suggested recently. Please avoid suggesting these or very similar events:\n${recentEventNames.map(name => `- ${name}`).join('\n')}`;
@@ -84,17 +87,6 @@ export async function fetchDailyUKEvents(userId?: number, recentEventNames?: str
                     typeof event.date === "string" &&
                     event.date.length > 0
                 );
-            })
-            .map((event) => {
-                // Correct the year in the date to use the current year
-                // OpenAI sometimes returns incorrect years, so we replace it with the current year
-                const currentYear = today.getFullYear();
-                const dateParts = event.date.split('-');
-                if (dateParts.length === 3) {
-                    dateParts[0] = currentYear.toString();
-                    event.date = dateParts.join('-');
-                }
-                return event;
             })
             .slice(0, 4);
 
